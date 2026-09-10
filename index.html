@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Control Modular</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4285F4">
+
+    <!-- Metadatos Open Graph para WhatsApp y Redes Sociales -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Sistema de Control Modular">
+    <meta property="og:description"
+        content="Aplicación para la gestión de los registros del Web-App Visita.">
+    <meta property="og:image" content="img/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+</head>
+
+<body>
+    <header>
+        <h1>📊 Sistema de Control Modular</h1>
+        <button id="btnInstalar" style="display: none;">📲 Instalar</button>
+    </header>
+
+    <main>
+        <!-- Selector de Hojas -->
+        <section class="card">
+            <h2>Selecciona una Sección</h2>
+            <select id="selectorHoja">
+                <option value="Superintendentes">👥 Superintendentes (Horizontal)</option>
+                <option value="Hospitalidad">🌸 Hospitalidad (Horizontal)</option>
+                <option value="Estudios Día 1">📚 Estudios Día 1 (Vertical)</option>
+                <option value="Estudios Día 2">📚 Estudios Día 2 (Vertical)</option>
+                <option value="Estudios Día 3">📚 Estudios Día 3 (Vertical)</option>
+                <option value="Pastoreo Día 1">🐑 Pastoreo Día 1 (Vertical)</option>
+                <option value="Pastoreo Día 2">🐑 Pastoreo Día 2 (Vertical)</option>
+                <option value="Pastoreo Día 3">🐑 Pastoreo Día 3 (Vertical)</option>
+            </select>
+
+            <!-- MODIFICADO: Texto e ícono fijos + Enlace dinámico a la derecha -->
+            <div style="margin-top: 12px; font-size: 1.1rem;">
+                <span style="font-weight: normal; color: #555555;">Sección activa: 📚 </span>
+                <a id="nombreHojaActiva" href="#" target="_blank" rel="noopener noreferrer"
+                    style="font-weight: bold; color: var(--primary); text-decoration: underline; cursor: pointer;"></a>
+            </div>
+        </section>
+
+
+        <!-- MODIFICADO: Ahora es un enlace dinámico con estilos adaptables -->
+        <a id="nombreHojaActiva" href="#" target="_blank" rel="noopener noreferrer"
+            style="display: inline-block; margin-top: 12px; font-weight: bold; color: var(--primary); font-size: 1.1rem; text-decoration: underline; cursor: pointer; transition: color 0.2s;"></a>
+        </section>
+
+
+        <!-- Formulario de Entrada Dinámico -->
+        <section class="card">
+            <h2 id="formTitulo">Añadir Registro</h2>
+            <form id="formularioDatos">
+                <div id="contenedorCampos" class="grid-formulario"></div>
+                <input type="hidden" id="registroId">
+                <div class="form-acciones">
+                    <button type="submit" id="btnGuardar">💾 Guardar Registro</button>
+                    <button type="button" id="btnCancelar" style="display:none;">Cancelar</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Tabla / Lista de Registros -->
+        <section class="card">
+            <h2>Registros Guardados</h2>
+            <div class="tabla-contenedor">
+                <table id="tablaDatos">
+                    <thead id="tablaCabecera"></thead>
+                    <tbody id="tablaCuerpo"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
