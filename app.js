@@ -242,11 +242,10 @@ window.recibirDatosDesdeGoogle = function(json) {
 };
 
 // =========================================================================
-// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON LÓGICA DE CONTROL
-// Descripción: Captura el submit del formulario Datos. Si la sección activa es 
-// Seguridad, realiza un bypass asíncrono para ignorar el bucle .forEach general, 
-// aislando la celda A1. Cuenta con un temporizador de refresco síncrono para dar
-// tiempo a que Google Sheets guarde el cambio antes de repintar la pantalla.
+// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO (HOJAS 1 A 8)
+// Descripción: Captura el submit del formulario Datos para las secciones regulares.
+// Mapea los campos dinámicos mediante el ciclo .forEach nativo de tu respaldo
+// y transmite vía POST con un retraso síncrono controlado para asegurar la escritura.
 // =========================================================================
 async function guardarRegistro(e) {
     e.preventDefault();
@@ -255,41 +254,31 @@ async function guardarRegistro(e) {
     const datos = {};
     let payload = {};
 
-    // 🛡️ EL AJUSTE EXACTO: Si es Seguridad, aislamos los datos para proteger las líneas 2 a 8
+    // 🛑 SECCIÓN SEGURIDAD PAUSADA MÓMENTANEAMENTE
     if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
-        // 🌟 CORREGIDO: Capturamos el input exacto usando el nombre de su label "Fecha / Estado"
-        const valorA1 = formData.get("Fecha / Estado") || document.querySelector("#contenedorCampos input")?.value || "";
-
-        payload = {
-            action: "update",            // Forzamos acción de actualización sobre el registro
-            hoja: "Seguridad",
-            tipoEstructura: "vertical",  // Definida como hoja vertical persistente
-            index: 0,                    // Apunta fijamente a la primera línea de datos (Celda A1)
-            datos: { "Fecha / Estado": valorA1 }, // Paquete limpio de un solo parámetro para A1
-            soloCelda: true              // Bandera crítica que le prohíbe al backend vaciar rangos
-        };
-        console.warn("🛡️ [Aislamiento de Celda] Saltando bucle masivo general. Transmitiendo exclusivamente celda A1: " + valorA1);
-    } else {
-        // =========================================================================
-        // COMPORTAMIENTO ORIGINAL INTACTO PARA TODAS LAS DEMÁS HOJAS DEL RESPALDO
-        // =========================================================================
-        estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
-
-        payload = {
-            action: registroEditandoIndex !== null ? "update" : "create",
-            hoja: hoja,
-            tipoEstructura: estructuras[hoja].tipo,
-            index: registroEditandoIndex,
-            datos: datos
-        };
+        console.log("Pestaña de Seguridad en pausa temporal según estrategia de desarrollo.");
+        alert("Esta sección está temporalmente en mantenimiento. Por favor, selecciona otra hoja.");
+        return;
     }
 
-    // --- PROCESO DE TRANSMISIÓN TRADICIONAL DE TU APLICACIÓN ---
+    // =========================================================================
+    // TU LÓGICA DE RECOLECCIÓN ORIGINAL INTACTA PARA LAS HOJAS DE LA 1 A LA 8
+    // =========================================================================
+    estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
+
+    payload = {
+        action: registroEditandoIndex !== null ? "update" : "create",
+        hoja: hoja,
+        tipoEstructura: estructuras[hoja].tipo,
+        index: registroEditandoIndex,
+        datos: datos
+    };
+
     const btnGuardar = document.getElementById("btnGuardar");
     if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
 
     try {
-        // SINCRONIZACIÓN CON APP ACTUAL: mode: "no-cors" elimina el bloqueo de origen de inmediato
+        // Transmisión directa optimizada en modo no-cors para saltar bloqueos en GitHub Pages
         await fetch(WEB_APP_URL, { 
             method: "POST", 
             mode: "no-cors",
@@ -299,26 +288,25 @@ async function guardarRegistro(e) {
             body: JSON.stringify(payload) 
         });
     } catch (err) {
-        console.error("Error en transmisión: ", err);
+        console.error("Error en el envío: ", err);
     }
 
-    // 🌟 CORRECCIÓN CRÍTICA: TEMPORIZADOR SÍNCRONO DE REFRESCO DE DATOS
-    // Le otorgamos 1.8 segundos de cortesía a los servidores de Google para que escriban el
-    // cambio en el documento real antes de vaciar el formulario y mandar a leer la tabla.
+    // 🌟 REFRESCO SÍNCRONO CONTROLADO
+    // Le otorgamos 2 segundos completos a Google Sheets para que asimile e inserte 
+    // el registro de forma física en su celda antes de mandar a limpiar y repintar la tabla.
     setTimeout(function() {
         if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
         
-        // Reseteamos el formulario de entrada de forma limpia
+        // Limpiamos el formulario de la pantalla
         e.target.reset();
         
-        // Mandamos a pintar y sincronizar las vistas de pantalla con la base de datos actualizada
+        // Forzamos el refresco síncrono para jalar los nuevos datos consolidados de la nube
         inicializarFormulario();
         cargarDatos();
         
-        console.log("🔄 [Refresco Sincronizado] Pantalla actualizada con los datos consolidados de la nube.");
-    }, 1800); 
+        console.log("🔄 [Sincronización Completada] Módulo actualizado con el nuevo registro de la nube.");
+    }, 2000); 
 }
-
 
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
