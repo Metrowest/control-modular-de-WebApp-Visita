@@ -267,6 +267,9 @@ function editarRegistro(index, rowData) {
 // =========================================================================
 // SECCIÓN 5: INTERCEPTOR DE GUARDADO CON TRADUCTOR DE ENTORNO UNIVERSAL (APP.JS)
 // Ubicación del bloque: CENTRO (PARTE MEDIA - FUNCIÓN 4)
+// Descripción: Empaqueta los datos del formulario antes de transmitir.
+// Incluye un escudo de aislamiento atómico para la pestaña Seguridad, evitando
+// el acople vertical masivo para prohibir de raíz el borrado de las líneas inferiores.
 // =========================================================================
 function procesarGuardadoRegistro(evento) {
     evento.preventDefault();
@@ -295,12 +298,21 @@ function procesarGuardadoRegistro(evento) {
     const superint = document.getElementById("txtSuperintendente").value.trim();
     let tel = document.getElementById("txtTelefono").value.trim();
 
-    // 1. ACOPLE HORIZONTAL: Si es Hospitalidad, adjuntamos la dirección
-    if (hoja === "Hospitalidad") {
+    // Variable auxiliar para inyectar parámetros extra en la URL de red
+    let parametrosExtraSeguridad = "";
+
+    // 🛡️ EL ESCUDO PROTECTOR (ANTI-BORRADO DE LÍNEAS INFERIORES)
+    if (hoja === "Seguridad") {
+        // Activamos la bandera atómica que le prohíbe al backend limpiar rangos
+        parametrosExtraSeguridad = "&soloCelda=true&tipoEstructura=vertical";
+        console.warn("🛡️ [Aislamiento de Rango] Bloqueando transmisión en cascada. Actualizando celda única.");
+    }
+    // 1. ACOPLE HORIZONTAL TRADICIONAL: Si es Hospitalidad, adjuntamos la dirección
+    else if (hoja === "Hospitalidad") {
         const direccionExtra = document.getElementById("txtCampo4").value.trim();
         tel = `${tel}&direccion=${encodeURIComponent(direccionExtra)}`;
     }
-    // 2. ACOPLE VERTICAL: Si la pestaña es de Estudios o Pastoreo, serializamos los 8 campos consecutivos
+    // 2. ACOPLE VERTICAL REGULAR: Si la pestaña es de Estudios o Pastoreo, serializamos los 8 campos consecutivos
     else if (hoja.includes("Estudios") || hoja.includes("Pastoreo")) {
         const c4 = document.getElementById("txtCampo4").value.trim();
         const c5 = document.getElementById("txtCampo5").value.trim();
@@ -317,10 +329,11 @@ function procesarGuardadoRegistro(evento) {
     const script = document.createElement("script");
     script.id = "script-guardar-hojas";
     
-    // Despachamos la URL corregida con el nombre de hoja purificado con espacios y acentos
-    script.src = `${WEB_APP_URL}?accion=guardar&hoja=${encodeURIComponent(hoja)}&index=${registroEditandoIndex}&grupo=${encodeURIComponent(grupo)}&superintendente=${encodeURIComponent(superint)}&telefono=${(hoja === "Hospitalidad" || hoja.includes("Estudios") || hoja.includes("Pastoreo")) ? tel : encodeURIComponent(tel)}`;
+    // Despachamos la URL corregida agregando de forma limpia las directivas de protección atómica de celdas
+    script.src = `${WEB_APP_URL}?accion=guardar&hoja=${encodeURIComponent(hoja)}&index=${registroEditandoIndex}&grupo=${encodeURIComponent(grupo)}&superintendente=${encodeURIComponent(superint)}&telefono=${(hoja === "Hospitalidad" || hoja.includes("Estudios") || hoja.includes("Pastoreo")) ? tel : encodeURIComponent(tel)}${parametrosExtraSeguridad}`;
     document.body.appendChild(script);
 }
+
 
 // =========================================================================
 // SECCIÓN 6: RECEPTOR UNIVERSAL DE RESPUESTAS DEL SERVIDOR (APP.JS)
