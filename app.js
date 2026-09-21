@@ -244,98 +244,72 @@ window.recibirDatosDesdeGoogle = function(json) {
 };
 
 // =========================================================================
-// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON ESCUDO POST ANTI-CORS
-// Descripción: Captura el envío. Si es Seguridad, aísla la variable de la línea 1.
-// Genera un formulario y un iframe fantasma en segundo plano para transmitir vía 
-// POST nativo. Esto evade las restricciones de CORS y procesa el guardado real.
+// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON AISLAMIENTO DE CELDA
+// Descripción: Captura los datos del formulario mediante FormData. Si la hoja 
+// activa es "Seguridad", realiza un bypass deteniendo el mapeo masivo y genera 
+// un payload enfocado en la línea 1. Envía los datos mediante fetch POST nativo
+// usando modo 'no-cors' para saltar las restricciones de la directiva CSP de Google.
 // =========================================================================
-function guardarRegistro(e) {
+async function guardarRegistro(e) {
     e.preventDefault();
     const hoja = document.getElementById("selectorHoja").value;
     const formData = new FormData(e.target);
     const datos = {};
-    
-    const accionReal = (hoja === "Seguridad" || registroEditandoIndex !== null) ? "update" : "create";
-    const indiceFila = (hoja === "Seguridad") ? 0 : registroEditandoIndex;
+    let payload = {};
 
-    // 1. RECOLECCIÓN DE VARIABLES ADAPTATIVA (EVITA EL VACIADO DE FILAS INFERIORES)
-    if (hoja === "Seguridad") {
-        const valorA1 = formData.get("Fecha / Estado");
-        datos["Fecha / Estado"] = valorA1;
+    // 🛡️ EL BLINDAJE DE EXCLUSIÓN: Si es la hoja Seguridad, rompemos el proceso destructivo
+    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
+        const valorA1 = formData.get("Fecha / Estado") || formData.get("txtGrupo") || document.getElementById("txtGrupo")?.value;
+
+        payload = {
+            action: "update",
+            hoja: "Seguridad",
+            tipoEstructura: "vertical",
+            index: 0, // Fuerza a que actúe estrictamente sobre la primera celda (A1)
+            datos: { "Fecha / Estado": valorA1 }, // Estructura limpia de un único campo para A1
+            soloCelda: true // Bandera crítica que le prohíbe al backend limpiar rangos
+        };
+        console.warn("🛡️ [Bypass Activado] Enviando payload aislado para proteger las líneas de la 2 a la 8.");
     } else {
+        // =========================================================================
+        // TU LÓGICA ORIGINAL INTACTA PARA TODAS LAS DEMÁS HOJAS (Superintendentes, etc.)
+        // =========================================================================
         estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
+
+        payload = {
+            action: registroEditandoIndex !== null ? "update" : "create",
+            hoja: hoja,
+            tipoEstructura: estructuras[hoja].tipo,
+            index: registroEditandoIndex,
+            datos: datos
+        };
     }
 
+    // --- PROCESO DE TRANSMISIÓN DE FÁBRICA REPARADO CON NO-CORS ---
     const btnGuardar = document.getElementById("btnGuardar");
-    if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
+    if (btnGuardar) btnGuardar.innerText = "Procesando...";
 
-    // 2. CREACIÓN DEL PUENTE INVISIBLE FORM-POST (EVITA BLOQUEOS DE RED CORS Y GUARDA REAL)
-    let idIframe = "puente-iframe-post";
-    let iframeFantasma = document.getElementById(idIframe);
-    if (iframeFantasma) iframeFantasma.remove();
-
-    // Creamos el iframe que recibirá el flujo de éxito de Google sin refrescar tu pantalla
-    iframeFantasma = document.createElement("iframe");
-    iframeFantasma.id = idIframe;
-    iframeFantasma.name = idIframe;
-    iframeFantasma.style.display = "none";
-    document.body.appendChild(iframeFantasma);
-
-    // Creamos el formulario de transmisión compatible con tu doPost(e) de Google
-    const formularioPost = document.createElement("form");
-    formularioPost.method = "POST";
-    formularioPost.action = WEB_APP_URL;
-    formularioPost.target = idIframe;
-
-    // Inyectamos los parámetros de control obligatorios de tu backend
-    const inputsControl = {
-        "action": accionReal,
-        "hoja": hoja,
-        "index": indiceFila,
-        "tipoEstructura": estructuras[hoja].tipo,
-        "datos": JSON.stringify(datos)
-    };
-
-    if (hoja === "Seguridad") {
-        inputsControl["soloCelda"] = "true";
+    try {
+        // 🚀 OBLIGATORIO: mode: "no-cors" permite que el POST viaje a Google sin que la CSP lo aborte
+        await fetch(WEB_APP_URL, { 
+            method: "POST", 
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload) 
+        });
+        
+        alert("¡Registro procesado con éxito! Las modificaciones se han enviado a Google Sheets.");
+    } catch (err) {
+        alert("Error al guardar.");
     }
 
-    // Insertamos los valores en inputs ocultos dentro del formulario fantasma
-    Object.keys(inputsControl).forEach(clave => {
-        const inputOculto = document.createElement("input");
-        inputOculto.type = "hidden";
-        inputOculto.name = clave;
-        inputOculto.value = inputsControl[clave];
-        formularioPost.appendChild(inputOculto);
-    });
-
-    // Añadimos de forma individual cada campo en el primer nivel del payload por compatibilidad
-    Object.keys(datos).forEach(llave => {
-        const inputCampo = document.createElement("input");
-        inputCampo.type = "hidden";
-        inputCampo.name = llave;
-        inputCampo.value = datos[llave];
-        formularioPost.appendChild(inputCampo);
-    });
-
-    // Acoplamos y disparamos el envío POST nativo de forma inmediata
-    document.body.appendChild(formularioPost);
-    formularioPost.submit();
-
-    // 3. LIMPIEZA Y REFRESCADO DE REGISTROS TRAS EL ENVÍO EXÍTOSO
-    setTimeout(function() {
-        formularioPost.remove();
-        if (iframeFantasma) iframeFantasma.remove();
-
-        if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
-        alert("¡Registro procesado y guardado con éxito en Google Sheets!");
-        
-        const form = document.getElementById("formularioDatos");
-        if (form) form.reset();
-        
-        inicializarFormulario();
-        cargarDatos();
-    }, 2200); // Margen de retraso óptimo para asegurar el procesamiento en la nube de Google
+    if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
+    e.target.reset();
+    
+    if (typeof inicializarFormulario === "function") inicializarFormulario();
+    if (typeof cargarDatos === "function") cargarDatos();
 }
 
 // =========================================================================
