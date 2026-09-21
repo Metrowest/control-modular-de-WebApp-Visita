@@ -512,6 +512,10 @@ function actualizarEnlaceUbicacion() {
     const c2 = document.getElementById("contenedorCampo2") || document.getElementById("txtSuperintendente")?.parentElement;
     const c3 = document.getElementById("contenedorCampo3") || document.getElementById("txtTelefono")?.parentElement;
 
+    // Captura de los inputs físicos reales para manipular su obligatoriedad en red
+    const input2 = document.getElementById("txtSuperintendente");
+    const input3 = document.getElementById("txtTelefono");
+
     if (etiquetaEnlace) {
         etiquetaEnlace.target = "_blank";
         
@@ -537,15 +541,21 @@ function actualizarEnlaceUbicacion() {
         }
     }
 
-    // 🌟 RESTAURACIÓN GENERAL DE VISIBILIDAD (Asegura que las demás hojas no sufran impacto)
+    // 🌟 RESTAURACIÓN GENERAL DE VISIBILIDAD Y OBLIGATORIEDAD (Protege las hojas de la 1 a la 8)
     if (c2) c2.style.display = "flex";
     if (c3) c3.style.display = "flex";
+    if (input2) input2.required = true;
+    if (input3) input3.required = true;
 
     // CONMUTADOR VISUAL DE ENTORNO RESPONSIVO TRADICIONAL PARA HOJAS
     if (hojaSeleccionada === "Seguridad") {
         if (tituloFormulario) tituloFormulario.innerText = "Control de Seguridad (Celda A1)";
         if (lbl1) lbl1.innerText = "Fecha / Estado";
         
+        // 🌟 APAGADO DE OBLIGATORIEDAD: Evita el error de enfoque del navegador en controles ocultos
+        if (input2) input2.required = false;
+        if (input3) input3.required = false;
+
         // Ocultamos de forma absoluta los inputs redundantes para dejar un solo campo activo
         if (c2) c2.style.display = "none"; 
         if (c3) c3.style.display = "none";
@@ -587,6 +597,7 @@ function actualizarEnlaceUbicacion() {
         if (tituloFormulario) tituloFormulario.innerText = "Añadir Registro (Superintendentes)";
     }
 }
+
 
 // =========================================================================
 // SECCIÓN 9 (NUEVA): MAQUINARIA INTERACTIVA DE INSTALACIÓN PWA (APP.JS)
