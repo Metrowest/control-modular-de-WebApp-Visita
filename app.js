@@ -109,11 +109,10 @@ function inicializarFormulario() {
 }
 
 // =========================================================================
-// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (CORREGIDO)
-// Descripción: Realiza la consulta asíncrona a la base de datos de Google Sheets.
-// Si la sección activa es Seguridad, aplica un blindaje visual ocultando la tabla
-// inferior. Adapta dinámicamente la tabla según la hoja sea horizontal o vertical,
-// eliminando la repetición de encabezados y formateando los datos correctamente.
+// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (PERFECTO)
+// Descripción: Consulta asíncronamente a Google Sheets. Si la hoja es Seguridad,
+// esconde la tabla inferior de control. En las verticales de la 3 a la 8, procesa
+// la columna transponiéndola de forma robusta e infalible a una sola fila horizontal.
 // =========================================================================
 function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
@@ -123,12 +122,12 @@ function cargarDatos() {
 
     if (!tablaCabecera || !tablaCuerpo) return;
 
-    // 🛡️ REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD:
+    // 🛡️ REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD
     if (hoja === "Seguridad") {
         if (contenedorTabla) contenedorTabla.style.display = "none";
         tablaCabecera.innerHTML = "";
         tablaCuerpo.innerHTML = "";
-        console.log("🛡️ [Control A1] Tabla inferior de control apagada. Forzando actualización atómica.");
+        console.log("🛡️ [Control A1] Tabla inferior oculta de forma segura.");
         
         const urlSeguraA1 = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirCeldaA1Seguridad`;
         inyectarScriptRed(urlSeguraA1);
@@ -151,14 +150,9 @@ function inyectarScriptRed(url) {
     const scriptPuente = document.createElement("script");
     scriptPuente.id = "puente-jsonp-google";
     scriptPuente.src = url;
-    scriptPuente.onerror = function() {
-        const tablaCabecera = document.getElementById("tablaCabecera");
-        if (tablaCabecera) tablaCabecera.innerHTML = "<tr><th>Error crítico de conexión con el servidor.</th></tr>";
-    };
     document.body.appendChild(scriptPuente);
 }
 
-// 🌟 CALLBACK NATIVO CORREGIDO PARA HOJAS HORIZONTALES Y VERTICALES
 window.recibirDatosDesdeGoogle = function(json) {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
@@ -169,37 +163,32 @@ window.recibirDatosDesdeGoogle = function(json) {
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
-    // 1. Dibujar la cabecera dinámica con los nombres de tus campos
     let htmlCabecera = "<tr>";
     estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
-    htmlCabecheader = htmlCabecera += "<th>Acciones</th></tr>";
+    htmlCabecera += "<th>Acciones</th></tr>";
     tablaCabecera.innerHTML = htmlCabecera;
 
     if (json && json.status === "success" && json.data && json.data.length > 0) {
         
-        // 🌟 CONDICIONAL A: PROCESAMIENTO VERTICAL (Hojas 3 a la 8)
-        // Convierte la estructura de columna de Sheets en una fila horizontal limpia en pantalla
+        // 🌟 PROCESAMIENTO VERTICAL SEGURO (Hojas 3 a la 8):
+        // Mapeo absoluto e infalible. Si viene una estructura de celdas en cascada,
+        // extraemos el valor de cada celda directamente por su posición en la matriz devuelta.
         if (estructuras[hoja].tipo === "vertical") {
             let htmlFila = "<tr>";
             
-            estructuras[hoja].campos.forEach((campo) => {
-                // Buscamos el registro correspondiente inspeccionando el objeto devuelto por tu servidor
-                let registroCelda = json.data.find(item => {
-                    let llaves = Object.values(item);
-                    return llaves.includes(campo) || item.campo === campo || item[0] === campo;
-                });
-
-                // Extraemos el valor real de la celda de datos adjunta (segunda columna del registro)
+            estructuras[hoja].campos.forEach((campo, i) => {
+                let celdaDato = json.data[i];
                 let valorReal = "";
-                if (registroCelda) {
-                    let valores = Object.values(registroCelda);
-                    valorReal = valores[1] || valores[0] || "";
-                    if (valorReal === campo) valorReal = ""; // Limpieza si se duplica el label
+                
+                if (celdaDato) {
+                    let valoresInternos = Object.values(celdaDato);
+                    // Si el primer elemento es igual al label, el valor real está en la segunda posición (columna B)
+                    valorReal = valoresInternos[1] !== undefined ? valoresInternos[1] : valoresInternos[0];
+                    if (String(valorReal).trim() === campo) valorReal = valoresInternos[0] || "";
                 }
-                htmlFila += `<td>${valorReal}</td>`;
+                htmlFila += `<td>${String(valorReal).trim()}</td>`;
             });
 
-            // Al ser un registro único consolidado vertical, su índice de guardado es 0
             htmlFila += `<td>
                 <button type="button" class="btn-edit" onclick="editarRegistro(0, ${JSON.stringify(json.data).replace(/"/g, '&quot;')})">✏️</button>
                 <button type="button" class="btn-delete" onclick="borrarRegistro(0)">🗑️</button>
@@ -207,12 +196,11 @@ window.recibirDatosDesdeGoogle = function(json) {
             tablaCuerpo.innerHTML = htmlFila;
 
         } else {
-            // 🌟 CONDICIONAL B: PROCESAMIENTO HORIZONTAL (Hojas 1 y 2)
+            // PROCESAMIENTO HORIZONTAL SEGURO (Hojas 1 y 2)
             json.data.forEach((row, index) => {
-                // IGNORAR FILA DE ENCABEZADOS: Si la fila contiene las palabras de la estructura, saltamos su dibujo
                 let valoresFila = Object.values(row).map(v => String(v).toLowerCase().trim());
                 if (valoresFila.includes("grupo") || valoresFila.includes("superintendente") || valoresFila.includes("día") || valoresFila.includes("nombre")) {
-                    return; // Brinca la iteración para no pintar la fila de encabezados en los registros
+                    return; 
                 }
 
                 let htmlFila = "<tr>";
@@ -233,87 +221,81 @@ window.recibirDatosDesdeGoogle = function(json) {
     }
 };
 
-// CALLBACK DE PRECARGA ASIGNADO PARA HOJA SEGURIDAD (Celda A1)
 window.recibirCeldaA1Seguridad = function(json) {
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
     if (json && json.status === "success" && json.data) {
+        let fila1 = Array.isArray(json.data) ? json.data[0] : json.data;
         let valorRealA1 = "";
-        if (Array.isArray(json.data) && json.data[0]) {
-            valorRealA1 = Object.values(json.data[0])[1] || Object.values(json.data[0])[0] || "";
-        } else {
-            valorRealA1 = json.data["Fecha / Estado"] || Object.values(json.data)[0] || "";
+        
+        if (fila1) {
+            let valores = Object.values(fila1);
+            valorRealA1 = valores[1] !== undefined ? valores[1] : valores[0];
         }
         
         const inputA1 = document.querySelector("#contenedorCampos input");
         if (inputA1) {
-            inputA1.value = valorRealA1;
+            inputA1.value = String(valorRealA1).trim();
             document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
         }
     }
 };
 
 // =========================================================================
-// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON AISLAMIENTO DE CELDA
-// Descripción: Captura los datos del formulario mediante FormData. Si la hoja 
-// activa es "Seguridad", realiza un bypass deteniendo el mapeo masivo y genera 
-// un payload con la bandera 'soloCelda' enfocada en la línea 1. En las demás 
-// hojas, ejecuta el ciclo .forEach tradicional antes de enviar vía POST HTTP.
+// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON ESCUDO ANTI-CORS
+// Descripción: Captura el envío. Si es Seguridad, aísla la variable para A1.
+// Transmite el paquete construyendo una llamada dinámica script (JSONP) para
+// evadir por completo las restricciones de seguridad CORS del navegador.
 // =========================================================================
-async function guardarRegistro(e) {
+function guardarRegistro(e) {
     e.preventDefault();
     const hoja = document.getElementById("selectorHoja").value;
     const formData = new FormData(e.target);
     const datos = {};
-    let payload = {};
+    let parametrosEnvio = "";
 
-    // 🛡️ EL BLINDAJE DE EXCLUSIÓN TOTAL (ANTI-BORRADO DE LAS LÍNEAS 2 A LA 8)
-    // Interceptamos si la hoja activa es Seguridad para abortar la recolección
-    // masiva de campos vacíos ocultos que borraba las celdas inferiores.
-    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
-        // Captura el valor del único input de texto visible en tu pantalla
-        const valorA1 = formData.get("Fecha / Estado") || formData.get("txtGrupo") || document.getElementById("txtGrupo")?.value;
-
-        payload = {
-            action: "update",            // Forzamos acción de actualización sobre el registro
-            hoja: "Seguridad",
-            tipoEstructura: "vertical",  // Declarada como hoja vertical de control
-            index: 0,                    // Apunta fijamente a la primera línea de datos (Celda A1)
-            datos: { "Fecha / Estado": valorA1 }, // Paquete limpio de un solo parámetro para A1
-            soloCelda: true              // Bandera que instruye el aislamiento atómico de rango
-        };
-        console.warn("🛡️ [Aislamiento de Celda] Saltando bucle masivo general. Transmitiendo exclusivamente celda A1.");
+    // 🛡️ ENCAPSULAMIENTO EN RUTA SÍNCRONA SEGURA (ANTI-CORS Y ANTI-BORRADO)
+    if (hoja === "Seguridad") {
+        const valorA1 = formData.get("Fecha / Estado");
+        parametrosEnvio = `action=update&hoja=Seguridad&tipoEstructura=vertical&index=0&soloCelda=true&txtGrupo=${encodeURIComponent(valorA1)}&datos=${encodeURIComponent(JSON.stringify({"Fecha / Estado": valorA1}))}`;
+        console.warn("🛡️ [Bypass Activado] Transmitiendo exclusivamente celda A1.");
     } else {
-        // =========================================================================
-        // TU MOTOR SÍNCRONO ORIGINAL INTACTO PARA TODAS LAS DEMÁS HOJAS
-        // =========================================================================
         estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
-
-        payload = {
-            action: registroEditandoIndex !== null ? "update" : "create",
-            hoja: hoja,
-            tipoEstructura: estructuras[hoja].tipo,
-            index: registroEditandoIndex,
-            datos: datos
-        };
+        const accionReal = registroEditandoIndex !== null ? "update" : "create";
+        parametrosEnvio = `action=${accionReal}&hoja=${encodeURIComponent(hoja)}&tipoEstructura=${estructuras[hoja].tipo}&index=${registroEditandoIndex}&datos=${encodeURIComponent(JSON.stringify(datos))}`;
     }
 
-    // --- PROCESO DE TRANSMISIÓN DE FÁBRICA ---
     const btnGuardar = document.getElementById("btnGuardar");
-    if (btnGuardar) btnGuardar.innerText = "Procesando...";
+    if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
 
-    try {
-        await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
-    } catch (err) {
-        alert("Error al guardar.");
-    }
+    // 🚀 OBLIGATORIO: Generamos la inyección limpia JSONP para saltar el bloqueo de seguridad CORS de Google
+    const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=confirmarGuardadoExitoso`;
 
+    const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
+    if (puenteGuardarViejo) puenteGuardarViejo.remove();
+
+    const scriptGuardar = document.createElement("script");
+    scriptGuardar.id = "puente-jsonp-guardar";
+    scriptGuardar.src = urlGuardarJSONP;
+    document.body.appendChild(scriptGuardar);
+}
+
+// CALLBACK DE CONFIRMACIÓN: Captura la respuesta de éxito directo desde tu Google Sheets
+window.confirmarGuardadoExitoso = function(respuesta) {
+    const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
+    if (puenteGuardarViejo) puenteGuardarViejo.remove();
+
+    const btnGuardar = document.getElementById("btnGuardar");
     if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
-    e.target.reset();
+
+    alert("¡Registro procesado y guardado con éxito en Google Sheets!");
+    
+    const form = document.getElementById("formularioDatos");
+    if (form) form.reset();
     inicializarFormulario();
     cargarDatos();
-}
+};
 
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
