@@ -131,7 +131,7 @@ function cargarDatos() {
 
     console.log("Inyectando etiqueta script de red de forma segura para la sección: " + hoja);
 
-    // 🌟 URL configurada con el callback exacto que tu Code.gs reconoce nativamente
+    // URL configurada con el callback exacto que tu Code.gs reconoce nativamente
     const urlSegura = `${WEB_APP_URL}?accion=leer&hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
 
     // Removemos cualquier puente de red viejo que haya quedado colgado en el DOM
@@ -152,7 +152,6 @@ function cargarDatos() {
 }
 
 // 2. FUNCIÓN RECEPTORA CENTRAL (CALLBACK NATIVO DEL BACKEND)
-// 🌟 CORREGIDO: Renombrada exactamente a recibirDatosDesdeGoogle para desbloquear el congelamiento
 window.recibirDatosDesdeGoogle = function(json) {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
@@ -173,7 +172,17 @@ window.recibirDatosDesdeGoogle = function(json) {
     if (json && json.status === "success" && json.data && json.data.length > 0) {
         json.data.forEach((row, index) => {
             let htmlFila = "<tr>";
-            estructuras[hoja].campos.forEach(c => htmlFila += `<td>${row[c] || ""}</td>`);
+            
+            // 🌟 MOTOR DE EXTRACCIÓN TOLERANTE:
+            // Recorremos los campos e intentamos extraer el dato de tres formas distintas para asegurar que suba
+            estructuras[hoja].campos.forEach((campo, i) => {
+                // Opción A: Por el nombre exacto del campo (Ej: row["Grupo"])
+                // Opción B: Por indexación numérica directa (Ej: row[0] o row[1]) si viene como Array
+                // Opción C: Por propiedad genérica del objeto (Ej: row["col" + i] o el objeto ordenado de Google)
+                let valorCelda = row[campo] || row[i] || Object.values(row)[i] || "";
+                
+                htmlFila += `<td>${valorCelda}</td>`;
+            });
             
             // Ocultamos el botón de borrar para la hoja Seguridad para proteger las líneas inferiores
             let botonesAccion = "";
