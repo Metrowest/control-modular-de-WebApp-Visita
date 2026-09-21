@@ -109,13 +109,13 @@ function inicializarFormulario() {
 }
 
 // =========================================================================
-// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (CORREGIDO)
-// Descripción: Realiza la petición asíncrona mediante JSONP. Si es la hoja 
-// Seguridad, esconde de raíz la tabla inferior para no mostrar las 67 líneas 
-// y dejar solo el input superior de control. En las demás hojas, renderiza todo.
+// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (REPARADO)
+// Descripción: Realiza la consulta asíncrona a la base de datos de Google Sheets.
+// Si la sección activa es Seguridad, aplica un blindaje visual ocultando la tabla
+// inferior para forzar el uso del input único. Mantiene la estructura de parámetros 
+// nativa del respaldo original para evitar fallos de conexión (MIME/CORS).
 // =========================================================================
-
-function cargarDatos() {
+async function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
@@ -123,97 +123,74 @@ function cargarDatos() {
 
     if (!tablaCabecera || !tablaCuerpo) return;
 
-    // 🌟 REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD:
-    // Ocultamos la grilla completa en la interfaz para que no se listen las líneas inferiores
+    // 🛡️ REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD:
+    // Ocultamos mecánicamente la grilla completa para que no se listen las 67 líneas inferiores
     if (hoja === "Seguridad") {
         if (contenedorTabla) contenedorTabla.style.display = "none";
         tablaCabecera.innerHTML = "";
         tablaCuerpo.innerHTML = "";
-        console.log("🛡️ [Control A1] Ocultando tabla de 67 líneas para forzar edición única en el formulario.");
+        console.log("🛡️ [Control A1] Tabla inferior de control apagada. Forzando actualización atómica.");
         
-        // Petición silenciosa para precargar el valor actual de la celda A1 en tu input superior
-        const urlSegura = `${WEB_APP_URL}?accion=leer&hoja=Seguridad&callback=precargarCeldaA1`;
-        inyectarScriptRed(urlSegura);
+        try {
+            // Consulta síncrona usando la estructura de URL limpia original de tu respaldo
+            const res = await fetch(`${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}`);
+            const json = await res.json();
+            
+            if (json && json.status === "success" && json.data && json.data.length > 0) {
+                // Al ser vertical persistente, capturamos el valor guardado en la celda A1 (Línea 1)
+                const fila1 = json.data[0];
+                const valorRealA1 = fila1["Fecha / Estado"] || Object.values(fila1)[0] || "";
+                
+                const inputA1 = document.querySelector("#contenedorCampos input");
+                if (inputA1) {
+                    inputA1.value = valorRealA1;
+                    document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
+                }
+            }
+        } catch (err) {
+            console.error("Error al precargar celda A1 de Seguridad: ", err);
+        }
         return;
     }
 
-    // Comportamiento normal para las hojas de la 1 a la 8
+    // COMPORTAMIENTO ORIGINAL DE TU RESPALDO PARA LAS HOJAS DE LA 1 A LA 8
     if (contenedorTabla) contenedorTabla.style.display = "block";
     tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
-    const urlSegura = `${WEB_APP_URL}?accion=leer&hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
-    inyectarScriptRed(urlSegura);
-}
+    try {
+        // Estructura de URL exacta de tu primer respaldo estable (Evita el error text/html MIME)
+        const res = await fetch(`${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}`);
+        const json = await res.json();
 
-// Función auxiliar para realizar la inyección limpia en el DOM
-function inyectarScriptRed(url) {
-    const puenteViejo = document.getElementById("puente-jsonp-google");
-    if (puenteViejo) puenteViejo.remove();
+        let htmlCabecera = "<tr>";
+        estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
+        htmlCabecera += "<th>Acciones</th></tr>";
+        tablaCabecera.innerHTML = htmlCabecera;
 
-    const scriptPuente = document.createElement("script");
-    scriptPuente.id = "puente-jsonp-google";
-    scriptPuente.src = url;
-    scriptPuente.onerror = function() {
-        const tablaCabecera = document.getElementById("tablaCabecera");
-        if (tablaCabecera) tablaCabecera.innerHTML = "<tr><th>Error crítico de conexión con el servidor.</th></tr>";
-    };
-    document.body.appendChild(scriptPuente);
-}
+        if (json.status === "success" && json.data && json.data.length > 0) {
+            json.data.forEach((row, index) => {
+                let htmlFila = "<tr>";
+                
+                // Mapeo seguro y tolerante por nombre o posición de columna
+                estructuras[hoja].campos.forEach((campo, i) => {
+                    let valorCelda = row[campo] || row[i] || Object.values(row)[i] || "";
+                    htmlFila += `<td>${valorCelda}</td>`;
+                });
 
-// 🌟 CALLBACK EXCLUSIVO: Carga los datos de las hojas de la 1 a la 8 en la tabla
-window.recibirDatosDesdeGoogle = function(json) {
-    const hoja = document.getElementById("selectorHoja").value;
-    const tablaCabecera = document.getElementById("tablaCabecera");
-    const tablaCuerpo = document.getElementById("tablaCuerpo");
-
-    if (!tablaCabecera || !tablaCuerpo) return;
-
-    const puenteViejo = document.getElementById("puente-jsonp-google");
-    if (puenteViejo) puenteViejo.remove();
-
-    let htmlCabecera = "<tr>";
-    estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
-    htmlCabecera += "<th>Acciones</th></tr>";
-    tablaCabecera.innerHTML = htmlCabecheader = htmlCabecera;
-
-    if (json && json.status === "success" && json.data && json.data.length > 0) {
-        json.data.forEach((row, index) => {
-            let htmlFila = "<tr>";
-            estructuras[hoja].campos.forEach((campo, i) => {
-                let valorCelda = row[campo] || row[i] || Object.values(row)[i] || "";
-                htmlFila += `<td>${valorCelda}</td>`;
+                htmlFila += `<td>
+                    <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
+                    <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
+                </td></tr>`;
+                tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
             });
-
-            htmlFila += `<td>
-                <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
-                <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
-            </td></tr>`;
-            tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
-        });
-    } else {
-        tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
-    }
-};
-
-// 🌟 CALLBACK DE PRECARGA: Inyecta de forma síncrona el estado real de A1 en tu único input superior
-window.precargarCeldaA1 = function(json) {
-    const puenteViejo = document.getElementById("puente-jsonp-google");
-    if (puenteViejo) puenteViejo.remove();
-
-    if (json && json.status === "success" && json.data && json.data.length > 0) {
-        const fila1 = json.data[0];
-        const valorRealA1 = fila1["Fecha / Estado"] || fila1[0] || Object.values(fila1)[0] || "";
-        
-        const inputA1 = document.querySelector("#contenedorCampos input");
-        if (inputA1) {
-            inputA1.value = valorRealA1;
-            // Activamos de forma simulada el título de edición para que el usuario sepa que está listo para modificar
-            document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
+        } else {
+            tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
         }
-    }
-};
-
+    } catch (e) {
+        console.error("Error de carga asíncrona: ", e);
+        tablaC
+        
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON AISLAMIENTO DE CELDA
 // Descripción: Captura los datos del formulario mediante FormData. Si la hoja 
