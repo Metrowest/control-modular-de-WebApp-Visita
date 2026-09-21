@@ -245,7 +245,8 @@ window.recibirDatosDesdeGoogle = function(json) {
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON LÓGICA DE CONTROL
 // Descripción: Captura el submit del formulario Datos. Si la sección activa es 
 // Seguridad, realiza un bypass asíncrono para ignorar el bucle .forEach general, 
-// aislando la celda A1 e inyectando la propiedad soloCelda: true para no borrar nada.
+// aislando la celda A1 e inyectando la propiedad soloCelda: true. Usa mode: 'no-cors'
+// para replicar la transmisión de la app actual y evadir bloqueos de red.
 // =========================================================================
 async function guardarRegistro(e) {
     e.preventDefault();
@@ -287,9 +288,13 @@ async function guardarRegistro(e) {
     if (btnGuardar) btnGuardar.innerText = "Procesando...";
 
     try {
-        // Realiza la llamada nativa usando la estructura idéntica de transmisión que te funciona
+        // 🚀 SINCRONIZACIÓN CON APP ACTUAL: mode: "no-cors" elimina el bloqueo de origen de inmediato
         await fetch(WEB_APP_URL, { 
             method: "POST", 
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify(payload) 
         });
     } catch (err) {
