@@ -1,13 +1,18 @@
+/* =========================================================================
+   STYLE.CSS - PARTE 1: VARIABLES GLOBALES Y ESTRUCTURA EN BLOQUES LADO A LADO
+   ========================================================================= */
 :root {
-    --primary: #4285F4;
-    --primary-hover: #3367D6;
-    --bg: #f5f7fb;
-    --card-bg: #ffffff;
-    --text: #333333;
-    --border: #e0e0e0;
+    --color-fondo: #f8fafc;
+    --color-superficie: #ffffff;
+    --color-turquesa: #2cbbb0;
+    --color-turquesa-oscuro: #229990;
+    --color-texto-oscuro: #0f172a;
+    --color-texto-medio: #475569;
+    --color-borde: #e2e8f0;
+    --fuente-sistema: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --sombra-modulo: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
-/* --- ESTILOS GENERALES Y RESPONSIVE DE IMÁGENES --- */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -15,159 +20,419 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
+    background-color: var(--color-fondo);
+    font-family: var(--fuente-sistema);
+    color: var(--color-texto-oscuro);
+    padding: 20px;
     line-height: 1.5;
 }
 
-/* Regla de oro para que TODAS las imágenes del sistema sean responsive */
-img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-}
-
-header {
-    background-color: var(--primary);
-    color: white;
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-header h1 {
-    font-size: 1.4rem;
-}
-
-main {
-    max-width: 1000px;
-    margin: 1.5rem auto;
-    padding: 0 1rem;
-}
-
-.card {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.03);
-}
-
-.card h2 {
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-    color: #444;
-}
-
-/* --- FORMULARIO ADAPTABLE (GRID) --- */
-select, input {
-    width: 100%;
-    padding: 0.75rem;
-    margin-top: 0.3rem;
-    margin-bottom: 0.8rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 1rem;
-    background-color: #fff;
-}
-
-/* Se vuelve de 2 columnas en pantallas medianas/grandes automáticamente */
-.grid-formulario {
+/* Contenedor Principal Adaptativo en Rejilla Modular Inteligente */
+.contenedor-principal {
+    max-width: 1300px;
+    margin: 0 auto;
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.5rem 1rem;
+    grid-template-columns: 1fr; /* Una columna por defecto en dispositivos móviles */
+    gap: 24px;
 }
 
-@media (min-width: 600px) {
-    .grid-formulario {
-        grid-template-columns: 1fr 1fr;
+/* DISTRIBUCIÓN AVANZADA: Reorganiza los bloques lado a lado en pantallas grandes (Estilo Foto 2) */
+@media (min-width: 992px) {
+    .contenedor-principal {
+        grid-template-columns: repeat(2, 1fr); /* Divide la pantalla en dos columnas idénticas */
+    }
+
+    /* El selector de secciones superior se extiende a todo lo ancho de la cumbre */
+    .contenedor-selector {
+        grid-column: span 2;
+    }
+
+    /* EL GESTOR DE ARCHIVOS FLOTA ARRIBA PANORÁMICO: Se extiende completo sobre las hojas */
+    #moduloGestorCarpetas {
+        grid-column: span 2;
+    }
+
+    /* EL FORMULARIO DE AÑADIR REGISTRO SE CLAVA EN LA COLUMNA IZQUIERDA */
+    .contenedor-principal > .tarjeta-modulo:nth-of-type(2) {
+        grid-column: 1;
+        align-self: start;
+    }
+
+    /* LA TABLA DE REGISTROS ALMACENADOS SE CLAVA EN LA COLUMNA DERECHA */
+    .contenedor-principal > .tarjeta-modulo:last-child {
+        grid-column: 2;
+        align-self: start;
     }
 }
 
-.form-acciones {
-    display: flex;
-    gap: 10px;
-    margin-top: 1rem;
-    flex-wrap: wrap;
-}
-
-button {
-    background-color: var(--primary);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1rem;
-    transition: background 0.2s;
-}
-
-button:hover { background-color: var(--primary-hover); }
-
-#btnCancelar {
-    background-color: #757575;
-}
-#btnCancelar:hover { background-color: #616161; }
-
-/* --- TABLA RESPONSIVE CON DESPLAZAMIENTO --- */
-.tabla-contenedor {
+/* El diseño de cubículos independientes (Tarjetas Modulares Limpias) */
+.tarjeta-modulo {
+    background-color: var(--color-superficie);
+    border-radius: 12px;
+    border: 1px solid var(--color-borde);
+    box-shadow: var(--sombra-modulo);
+    padding: 24px;
     width: 100%;
-    overflow-x: auto; /* Permite deslizar la tabla en móviles sin romper el diseño */
-    -webkit-overflow-scrolling: touch;
-    border: 1px solid var(--border);
+    display: block;
+}
+
+.tarjeta-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--color-borde);
+    padding-bottom: 12px;
+}
+
+.icono-titulo {
+    font-size: 1.4rem;
+}
+
+h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-texto-oscuro);
+}
+
+.contenedor-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+@media (min-width: 768px) {
+    .contenedor-selector {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.etiqueta-seleccion {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-texto-medio);
+}
+/* =========================================================================
+   STYLE.CSS - PARTE 2: COMPONENTES, FORMULARIOS Y RESPONSIVIDAD ESTRICTA
+   ========================================================================= */
+
+/* Selectores e Inputs estilizados */
+.selector-estilizado {
+    width: 100%;
+    padding: 10px 14px;
     border-radius: 8px;
-    background: #fff;
+    border: 1px solid var(--color-borde);
+    background-color: var(--color-superficie);
+    font-family: var(--fuente-sistema);
+    font-size: 0.95rem;
+    color: var(--color-texto-oscuro);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.selector-estilizado:focus {
+    border-color: var(--color-turquesa);
+}
+
+.enlace-seccion-activa {
+    font-size: 0.85rem;
+    color: var(--color-texto-medio);
+    font-weight: 500;
+}
+
+.link-moderno {
+    color: var(--color-turquesa);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.link-moderno:hover {
+    text-decoration: underline;
+}
+
+/* Grilla del Formulario interna (Campos 1, 2, 3...) */
+.grid-formulario {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+/* Ajuste de columnas: 2 columnas en dispositivos móviles/tabletas y 3 columnas solo en computadoras */
+@media (min-width: 480px) {
+    .grid-formulario {
+        grid-template-columns: repeat(2, 1fr); /* 2 columnas en móviles y tabletas */
+    }
+}
+@media (min-width: 1024px) {
+    .grid-formulario {
+        grid-template-columns: repeat(2, 1fr) !important; /* Fuerza solo 2 columnas de inputs */
+    }
+}
+
+.campo-formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.campo-formulario label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-texto-medio);
+}
+
+.campo-formulario input[type="text"] {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--color-borde);
+    font-size: 0.9rem;
+    color: var(--color-texto-oscuro);
+    font-family: var(--fuente-sistema);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.campo-formulario input[type="text"]:focus {
+    border-color: var(--color-turquesa);
+    box-shadow: 0 0 0 3px rgba(44, 187, 176, 0.1);
+}
+
+/* Bloque de Botones Flexibles y Adaptativos */
+.bloque-botones {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+@media (min-width: 480px) {
+    .bloque-botones {
+        flex-direction: row;
+    }
+}
+
+.btn-primario, .btn-secundario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: var(--fuente-sistema);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-primario {
+    background-color: var(--color-turquesa);
+    color: #ffffff;
+}
+
+.btn-primario:hover {
+    background-color: var(--color-turquesa-oscuro);
+}
+
+.btn-secundario {
+    background-color: #f1f5f9;
+    color: #ef4444;
+    border: 1px solid #fee2e2;
+}
+
+.btn-secundario:hover {
+    background-color: #fee2e2;
+}
+
+.btn-primario:active, .btn-secundario:active {
+    transform: scale(0.98);
+}
+
+/* Blindaje de Tablas Responsivas con scroll interno */
+.tabla-responsiva {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    border: 1px solid var(--color-borde);
+    margin-top: 10px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 600px; /* Asegura legibilidad en pantallas muy chicas */
+    text-align: left;
+    font-size: 0.85rem;
 }
 
 th, td {
-    padding: 0.85rem;
-    border-bottom: 1px solid var(--border);
-    text-align: left;
-    font-size: 0.95rem;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--color-borde);
 }
 
-th { 
-    background-color: #f8f9fa;
+th {
+    background-color: #f8fafc;
+    color: var(--color-texto-medio);
     font-weight: 600;
+    white-space: nowrap;
 }
 
-/* --- BOTONES DE ACCIÓN MEJORADOS Y ESPACIADOS --- */
-td:last-child {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-start;
-    align-items: center;
+td {
+    color: var(--color-texto-oscuro);
 }
 
+tr:last-child td {
+    border-bottom: none;
+}
+
+.celda-carga {
+    padding: 30px;
+    text-align: center;
+    color: var(--color-texto-medio);
+}
+
+/* Spinner de carga estético */
+.spinner-carga {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #e2e8f0;
+    border-top-color: var(--color-turquesa);
+    border-radius: 50%;
+    margin: 0 auto 10px auto;
+    animation: girarSpinner 0.8s linear infinite;
+}
+
+@keyframes girarSpinner {
+    to { transform: rotate(360deg); }
+}
+
+/* Botones de acción originales de las celdas de Sheets */
 .btn-edit, .btn-delete {
-    padding: 6px 12px;
+    background: none;
     border: none;
-    border-radius: 6px;
+    font-size: 1.1rem;
+    padding: 4px 8px;
     cursor: pointer;
-    font-size: 0.9rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-    min-width: 38px;
-    min-height: 34px;
+    transition: transform 0.1s;
 }
 
-.btn-edit { background-color: #ff9800; color: white; }
-.btn-edit:hover { background-color: #e65100; transform: translateY(-1px); }
+.btn-edit:hover, .btn-delete:hover {
+    transform: scale(1.2);
+}
 
-.btn-delete { background-color: #e53935; color: white; }
-.btn-delete:hover { background-color: #b71c1c; transform: translateY(-1px); }
+/* =========================================================================
+   DISTRIBUCIÓN PARALELA MAESTRA INTEGRADA (MÓDULOS DE LA FOTO)
+   ========================================================================= */
+.contenedor-modulos-paralelos {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 10px;
+    box-sizing: border-box;
+}
 
-.btn-edit:active, .btn-delete:active { transform: translateY(1px); }
+/* Columna Izquierda (Carpetas) y Columna Central (Formulario) */
+.contenedor-modulos-paralelos > .tarjeta-modulo:not(:last-child),
+.contenedor-modulos-paralelos > #moduloGestorCarpetas {
+    flex: 1;
+    min-width: 340px;
+    margin: 0 !important;
+}
+
+/* Columna Derecha Ancha (Registros Almacenados de la Hoja) */
+.contenedor-modulos-paralelos > .tarjeta-modulo:last-child {
+    flex: 2;
+    min-width: 500px;
+    margin: 0 !important;
+}
+
+/* Optimización Responsiva para Teléfonos y Tabletas Pequeñas */
+@media (max-width: 1100px) {
+    .contenedor-modulos-paralelos {
+        flex-direction: column;
+        align-items: center;
+    }
+    .contenedor-modulos-paralelos > .tarjeta-modulo {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+}
+
+/* =========================================================================
+   NUEVAS ADICIONES: ICONOS DINÁMICOS Y COMPACTACIÓN DEL BANNER PWA
+   ========================================================================= */
+
+/* Alineación e integración de Iconos Dinámicos (MÓDULO DE CARPETAS) */
+.tabla-responsiva td i, 
+.tarjeta-modulo i {
+    margin-right: 8px;
+    font-size: 1.15rem;
+    vertical-align: middle;
+}
+
+/* Zona de amortiguación para que el formulario no sea tapado en móviles */
+@media (max-width: 768px) {
+    .grid-formulario {
+        margin-bottom: 12px;
+    }
+    .bloque-botones {
+        margin-bottom: 40px; /* Deja un espacio libre abajo para que el botón "Guardar" suba y sea accesible */
+    }
+}
+
+/* =========================================================================
+   CONTROL CENTRAL COMPACTO DEL BANNER PWA (DESDE ARCHIVO STYLE.CSS)
+   ========================================================================= */
+#bannerInstalacionPWA {
+    background-color: var(--color-turquesa) !important;
+    color: #ffffff !important;
+    padding: 6px 12px !important; /* Relleno compacto para no desbordar */
+    position: fixed !important;
+    bottom: 8px !important;
+    left: 16px !important;
+    z-index: 9999 !important;
+    border-radius: 8px !important;
+    
+    /* Configuración de alineación horizontal en una sola línea */
+    display: inline-flex !important;
+    flex-direction: row-reverse; /* Empuja el botón al principio (izquierda) y el texto a la derecha */
+    align-items: center !important;
+    justify-content: flex-end !important; /* Junta los elementos desde el inicio */
+    gap: 10px !important; /* Espaciado corto entre el botón y el texto */
+    
+    /* Tus dos líneas de control estricto de tamaño */
+    max-width: 300px !important;
+    max-height: 50px !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+#bannerInstalacionPWA p {
+    margin: 0 !important;
+    font-size: 0.75rem !important; /* Letra compacta para que quepa en los 300px */
+    font-weight: 500 !important;
+    white-space: nowrap; /* Evita que el texto se rompa en dos renglones */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#btnInstalarPWA {
+    background-color: #ffffff !important;
+    color: var(--color-turquesa) !important;
+    border: none !important;
+    padding: 4px 8px !important; /* Botón pequeño y estilizado */
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 0.72rem !important;
+    white-space: nowrap;
+}
