@@ -270,9 +270,8 @@ function guardarRegistro(e) {
     const btnGuardar = document.getElementById("btnGuardar");
     if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
 
-    // Generamos la inyección limpia JSONP para saltar el bloqueo de seguridad CORS de Google
-    // Agregamos múltiples opciones de callback comunes en las macros para intentar pescar la respuesta
-    const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=recibirRespuestaServidor`;
+    // 🚀 ASIGNACIÓN DE CALLBACK EXCLUSIVO: Usamos una función única de guardado para no colisionar con la Sección 5
+    const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=recibirConfirmacionGuardadoNativo`;
 
     const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
     if (puenteGuardarViejo) puenteGuardarViejo.remove();
@@ -305,8 +304,9 @@ function guardarRegistro(e) {
     }, 2500); // 2.5 segundos es el margen óptimo de respuesta en Google Apps Script
 }
 
-// DECLARACIONES MÚLTIPLES DE CALLBACK (Por si el servidor llega a responder de forma nativa)
-window.recibirRespuestaServidor = window.confirmarGuardadoExitoso = window.recibirDatosDesdeGoogle = function(respuesta) {
+// 🌟 CALLBACK DE ENVÍO PURIFICADO E INDEPENDIENTE
+// Al remover la igualación con recibirDatosDesdeGoogle, desbloqueamos la Sección 5 por completo
+window.recibirConfirmacionGuardadoNativo = function(respuesta) {
     const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
     if (puenteGuardarViejo) {
         puenteGuardarViejo.remove();
@@ -319,7 +319,7 @@ window.recibirRespuestaServidor = window.confirmarGuardadoExitoso = window.recib
         
         inicializarFormulario();
         cargarDatos();
-        console.log("✅ Callback capturado nativamente desde el servidor.");
+        console.log("✅ Callback de guardado capturado nativamente desde el servidor.");
     }
 };
 
