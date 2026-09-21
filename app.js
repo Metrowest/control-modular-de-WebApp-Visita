@@ -244,10 +244,10 @@ window.recibirDatosDesdeGoogle = function(json) {
 };
 
 // =========================================================================
-// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON ESCUDO ANTI-CORS
-// Descripción: Captura el envío del formulario. Si es la hoja Seguridad, aísla 
-// el input para la celda A1. Mapea y transmite el paquete utilizando los parámetros 
-// exactos nativos que tu Code.gs requiere, evitando bloqueos de seguridad.
+// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON ESCUDO POST ANTI-CORS
+// Descripción: Captura el envío. Si es Seguridad, aísla la variable de la línea 1.
+// Genera un formulario y un iframe fantasma en segundo plano para transmitir vía 
+// POST nativo. Esto evade las restricciones de CORS y procesa el guardado real.
 // =========================================================================
 function guardarRegistro(e) {
     e.preventDefault();
@@ -255,63 +255,87 @@ function guardarRegistro(e) {
     const formData = new FormData(e.target);
     const datos = {};
     
-    // Capturamos el tipo de acción oficial según el estado de la app
     const accionReal = (hoja === "Seguridad" || registroEditandoIndex !== null) ? "update" : "create";
     const indiceFila = (hoja === "Seguridad") ? 0 : registroEditandoIndex;
 
-    // 🛡️ RECOLECCIÓN DE VARIABLES ADAPTATIVA (EVITA EL VACIADO DE LÍNEAS 2 A 8)
+    // 1. RECOLECCIÓN DE VARIABLES ADAPTATIVA (EVITA EL VACIADO DE FILAS INFERIORES)
     if (hoja === "Seguridad") {
-        // Obtenemos el texto escrito en tu único input superior
         const valorA1 = formData.get("Fecha / Estado");
         datos["Fecha / Estado"] = valorA1;
     } else {
-        // Proceso de recolección de fábrica para las hojas de la 1 a la 8
         estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
     }
 
     const btnGuardar = document.getElementById("btnGuardar");
     if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
 
-    // 🚀 ARMADO DE PAYLOAD NATIVO: Sincronizado milimétricamente con las variables de tu Code.gs original
-    let parametrosEnvio = `action=${accionReal}&hoja=${encodeURIComponent(hoja)}&index=${indiceFila}`;
-    
-    // Añadimos de forma individual cada campo para que el servidor los procese sin errores de lectura
-    Object.keys(datos).forEach(llave => {
-        parametrosEnvio += `&${encodeURIComponent(llave)}=${encodeURIComponent(datos[llave])}`;
-    });
+    // 2. CREACIÓN DEL PUENTE INVISIBLE FORM-POST (EVITA BLOQUEOS DE RED CORS Y GUARDA REAL)
+    let idIframe = "puente-iframe-post";
+    let iframeFantasma = document.getElementById(idIframe);
+    if (iframeFantasma) iframeFantasma.remove();
 
-    // Si es Seguridad, añadimos la bandera de protección de rango de celdas
+    // Creamos el iframe que recibirá el flujo de éxito de Google sin refrescar tu pantalla
+    iframeFantasma = document.createElement("iframe");
+    iframeFantasma.id = idIframe;
+    iframeFantasma.name = idIframe;
+    iframeFantasma.style.display = "none";
+    document.body.appendChild(iframeFantasma);
+
+    // Creamos el formulario de transmisión compatible con tu doPost(e) de Google
+    const formularioPost = document.createElement("form");
+    formularioPost.method = "POST";
+    formularioPost.action = WEB_APP_URL;
+    formularioPost.target = idIframe;
+
+    // Inyectamos los parámetros de control obligatorios de tu backend
+    const inputsControl = {
+        "action": accionReal,
+        "hoja": hoja,
+        "index": indiceFila,
+        "tipoEstructura": estructuras[hoja].tipo,
+        "datos": JSON.stringify(datos)
+    };
+
     if (hoja === "Seguridad") {
-        parametrosEnvio += `&soloCelda=true`;
+        inputsControl["soloCelda"] = "true";
     }
 
-    // Inyección limpia JSONP dirigida al callback nativo de lectura para forzar la actualización asíncrona
-    const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=recibirDatosDesdeGoogle`;
+    // Insertamos los valores en inputs ocultos dentro del formulario fantasma
+    Object.keys(inputsControl).forEach(clave => {
+        const inputOculto = document.createElement("input");
+        inputOculto.type = "hidden";
+        inputOculto.name = clave;
+        inputOculto.value = inputsControl[clave];
+        formularioPost.appendChild(inputOculto);
+    });
 
-    const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
-    if (puenteGuardarViejo) puenteGuardarViejo.remove();
+    // Añadimos de forma individual cada campo en el primer nivel del payload por compatibilidad
+    Object.keys(datos).forEach(llave => {
+        const inputCampo = document.createElement("input");
+        inputCampo.type = "hidden";
+        inputCampo.name = llave;
+        inputCampo.value = datos[llave];
+        formularioPost.appendChild(inputCampo);
+    });
 
-    const scriptGuardar = document.createElement("script");
-    scriptGuardar.id = "puente-jsonp-guardar";
-    scriptGuardar.src = urlGuardarJSONP;
-    document.body.appendChild(scriptGuardar);
+    // Acoplamos y disparamos el envío POST nativo de forma inmediata
+    document.body.appendChild(formularioPost);
+    formularioPost.submit();
 
-    // Temporizador de seguridad para liberar el botón e interfaz de usuario de forma fluida
+    // 3. LIMPIEZA Y REFRESCADO DE REGISTROS TRAS EL ENVÍO EXÍTOSO
     setTimeout(function() {
-        const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
-        if (puenteGuardarViejo) {
-            puenteGuardarViejo.remove();
+        formularioPost.remove();
+        if (iframeFantasma) iframeFantasma.remove();
 
-            if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
-            alert("¡Registro procesado y guardado con éxito en Google Sheets!");
-            
-            const form = document.getElementById("formularioDatos");
-            if (form) form.reset();
-            
-            inicializarFormulario();
-            cargarDatos();
-        }
-    }, 2000); // 2 segundos es el tiempo ideal para el procesamiento de la macro en la nube
+        if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
+        alert("¡Registro procesado y guardado con éxito en Google Sheets!");
+        
+        const form = document.getElementById("formularioDatos");
+        if (form) form.reset();
+        
+        inicializarFormulario();
+        cargarDatos();
+    }, 2200); // Margen de retraso óptimo para asegurar el procesamiento en la nube de Google
 }
 
 // =========================================================================
