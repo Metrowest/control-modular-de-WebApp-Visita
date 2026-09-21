@@ -267,8 +267,8 @@ async function guardarRegistro(e) {
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
 // Descripción: Administra la carga de datos en los campos superiores para su 
-// edición, empaqueta las peticiones POST de eliminación física de registros
-// y gestiona el botón de cancelación restableciendo los títulos a su estado inicial.
+// edición mediante un motor tolerante a la estructura del objeto devuelto por 
+// el servidor. También gestiona las peticiones de borrado y la cancelación del estado.
 // =========================================================================
 
 window.editarRegistro = (index, rowData) => {
@@ -278,11 +278,21 @@ window.editarRegistro = (index, rowData) => {
     const btnCancelar = document.getElementById("btnCancelar");
     if (btnCancelar) btnCancelar.style.display = "inline-block";
 
-    // Mapea síncronamente los datos de la fila seleccionada en los inputs activos
+    // Capturamos todos los inputs dinámicos que se dibujaron en pantalla
     const campos = document.querySelectorAll("#contenedorCampos input");
-    campos.forEach(input => {
-        input.value = rowData[input.name] || "";
+    
+    // 🌟 MOTOR DE CARGA TOLERANTE PARA EDICIÓN:
+    // Mapeamos de forma secuencial cada campo según su posición en el formulario
+    campos.forEach((input, i) => {
+        // Opción A: Intenta extraer el dato por el nombre del input (Ej: rowData["Grupo"])
+        // Opción B: Intenta extraer por el índice numérico correlativo (Ej: rowData[0], rowData[1])
+        // Opción C: Extrae el valor directamente por la posición de los datos en el objeto de Google
+        let valorRecuperado = rowData[input.name] || rowData[i] || Object.values(rowData)[i] || "";
+        
+        input.value = valorRecuperado;
     });
+    
+    console.log("✏️ Registro cargado con éxito en los campos de edición superior utilizando mapeo posicional.");
 };
 
 window.borrarRegistro = async (index) => {
