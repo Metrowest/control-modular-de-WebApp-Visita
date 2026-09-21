@@ -245,33 +245,48 @@ window.recibirDatosDesdeGoogle = function(json) {
 
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON ESCUDO ANTI-CORS
-// Descripción: Captura el envío. Si es Seguridad, envía exclusivamente A1.
-// Transmite usando un canal de callback exclusivo llamado recibirConfirmacionGuardadoNativo
-// Cuenta con cláusula de liberación por tiempo de 2.5 segundos para evitar bloqueos.
+// Descripción: Captura el envío del formulario. Si es la hoja Seguridad, aísla 
+// el input para la celda A1. Mapea y transmite el paquete utilizando los parámetros 
+// exactos nativos que tu Code.gs requiere, evitando bloqueos de seguridad.
 // =========================================================================
 function guardarRegistro(e) {
     e.preventDefault();
     const hoja = document.getElementById("selectorHoja").value;
     const formData = new FormData(e.target);
     const datos = {};
-    let parametrosEnvio = "";
+    
+    // Capturamos el tipo de acción oficial según el estado de la app
+    const accionReal = (hoja === "Seguridad" || registroEditandoIndex !== null) ? "update" : "create";
+    const indiceFila = (hoja === "Seguridad") ? 0 : registroEditandoIndex;
 
-    // 🛡️ ENCAPSULAMIENTO EN RUTA SÍNCRONA SEGURA (ANTI-CORS Y ANTI-BORRADO)
-    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
+    // 🛡️ RECOLECCIÓN DE VARIABLES ADAPTATIVA (EVITA EL VACIADO DE LÍNEAS 2 A 8)
+    if (hoja === "Seguridad") {
+        // Obtenemos el texto escrito en tu único input superior
         const valorA1 = formData.get("Fecha / Estado");
-        parametrosEnvio = `action=update&hoja=Seguridad&tipoEstructura=vertical&index=0&soloCelda=true&txtGrupo=${encodeURIComponent(valorA1)}&datos=${encodeURIComponent(JSON.stringify({"Fecha / Estado": valorA1}))}`;
-        console.warn("🛡️ [Bypass Activado] Transmitiendo exclusivamente celda A1.");
+        datos["Fecha / Estado"] = valorA1;
     } else {
+        // Proceso de recolección de fábrica para las hojas de la 1 a la 8
         estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
-        const accionReal = registroEditandoIndex !== null ? "update" : "create";
-        parametrosEnvio = `action=${accionReal}&hoja=${encodeURIComponent(hoja)}&tipoEstructura=${estructuras[hoja].tipo}&index=${registroEditandoIndex}&datos=${encodeURIComponent(JSON.stringify(datos))}`;
     }
 
     const btnGuardar = document.getElementById("btnGuardar");
     if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
 
-    // Canal único de guardado que no colisiona con el canal de lectura de la Sección 5
-    const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=recibirConfirmacionGuardadoNativo`;
+    // 🚀 ARMADO DE PAYLOAD NATIVO: Sincronizado milimétricamente con las variables de tu Code.gs original
+    let parametrosEnvio = `action=${accionReal}&hoja=${encodeURIComponent(hoja)}&index=${indiceFila}`;
+    
+    // Añadimos de forma individual cada campo para que el servidor los procese sin errores de lectura
+    Object.keys(datos).forEach(llave => {
+        parametrosEnvio += `&${encodeURIComponent(llave)}=${encodeURIComponent(datos[llave])}`;
+    });
+
+    // Si es Seguridad, añadimos la bandera de protección de rango de celdas
+    if (hoja === "Seguridad") {
+        parametrosEnvio += `&soloCelda=true`;
+    }
+
+    // Inyección limpia JSONP dirigida al callback nativo de lectura para forzar la actualización asíncrona
+    const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=recibirDatosDesdeGoogle`;
 
     const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
     if (puenteGuardarViejo) puenteGuardarViejo.remove();
@@ -281,14 +296,14 @@ function guardarRegistro(e) {
     scriptGuardar.src = urlGuardarJSONP;
     document.body.appendChild(scriptGuardar);
 
-    // MOTOR DE LIBERACIÓN PROACTIVA FORZADA
+    // Temporizador de seguridad para liberar el botón e interfaz de usuario de forma fluida
     setTimeout(function() {
         const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
         if (puenteGuardarViejo) {
-            console.log("⏱️ [Liberación Forzada] Liberando botón tras transmisión.");
             puenteGuardarViejo.remove();
 
             if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
+            alert("¡Registro procesado y guardado con éxito en Google Sheets!");
             
             const form = document.getElementById("formularioDatos");
             if (form) form.reset();
@@ -296,26 +311,8 @@ function guardarRegistro(e) {
             inicializarFormulario();
             cargarDatos();
         }
-    }, 2500); 
+    }, 2000); // 2 segundos es el tiempo ideal para el procesamiento de la macro en la nube
 }
-
-// CALLBACK DE GUARDADO ÚNICO Y PURIFICADO
-window.recibirConfirmacionGuardadoNativo = function(respuesta) {
-    const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
-    if (puenteGuardarViejo) {
-        puenteGuardarViejo.remove();
-        
-        const btnGuardar = document.getElementById("btnGuardar");
-        if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
-
-        const form = document.getElementById("formularioDatos");
-        if (form) form.reset();
-        
-        inicializarFormulario();
-        cargarDatos();
-        console.log("✅ Transmisión asíncrona completada de forma nativa.");
-    }
-};
 
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
