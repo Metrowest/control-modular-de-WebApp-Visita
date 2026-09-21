@@ -169,6 +169,10 @@ async function cargarDatos() {
 
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON AISLAMIENTO DE CELDA
+// Descripción: Captura los datos del formulario mediante FormData. Si la hoja 
+// activa es "Seguridad", realiza un bypass deteniendo el mapeo masivo y genera 
+// un payload con la bandera 'soloCelda' enfocada en la línea 1. En las demás 
+// hojas, ejecuta el ciclo .forEach tradicional antes de enviar vía POST HTTP.
 // =========================================================================
 async function guardarRegistro(e) {
     e.preventDefault();
