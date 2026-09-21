@@ -471,10 +471,13 @@ function actualizarEnlaceUbicacion() {
     const lbl1 = document.getElementById("lblCampo1"), lbl2 = document.getElementById("lblCampo2"), lbl3 = document.getElementById("lblCampo3"), lbl4 = document.getElementById("lblCampo4"), lbl5 = document.getElementById("lblCampo5"), lbl6 = document.getElementById("lblCampo6"), lbl7 = document.getElementById("lblCampo7"), lbl8 = document.getElementById("lblCampo8");
     const c4 = document.getElementById("contenedorCampo4"), c5 = document.getElementById("contenedorCampo5"), c6 = document.getElementById("contenedorCampo6"), c7 = document.getElementById("contenedorCampo7"), c8 = document.getElementById("contenedorCampo8");
 
+    // Bloques contenedores adicionales para campos 2 y 3 (vitales para ocultar en Seguridad)
+    const c2 = document.getElementById("contenedorCampo2") || document.getElementById("txtSuperintendente")?.parentElement;
+    const c3 = document.getElementById("contenedorCampo3") || document.getElementById("txtTelefono")?.parentElement;
+
     if (etiquetaEnlace) {
         etiquetaEnlace.target = "_blank";
         
-        // 🌟 TRADUCTOR DE ENTORNO VISUAL: Convierte guiones bajos del ID en espacios para leer el diccionario
         let nombreHojaLimpio = hojaSeleccionada.replace(/_/g, " ");
         if (nombreHojaLimpio === "Estudios Dia 1") nombreHojaLimpio = "Estudios Día 1";
         if (nombreHojaLimpio === "Estudios Dia 2") nombreHojaLimpio = "Estudios Día 2";
@@ -483,7 +486,6 @@ function actualizarEnlaceUbicacion() {
         if (nombreHojaLimpio === "Pastoreo Dia 2") nombreHojaLimpio = "Pastoreo Día 2";
         if (nombreHojaLimpio === "Pastoreo Dia 3") nombreHojaLimpio = "Pastoreo Día 3";
 
-        // Extraemos de forma directa la dirección real mapeada en tu nueva Sección 1
         const urlDestinoReal = ENLACES_HOJAS[nombreHojaLimpio];
         etiquetaEnlace.href = urlDestinoReal || "#";
 
@@ -498,8 +500,25 @@ function actualizarEnlaceUbicacion() {
         }
     }
 
+    // 🌟 RESTAURACIÓN GENERAL DE VISIBILIDAD (Asegura que las demás hojas no sufran impacto)
+    if (c2) c2.style.display = "flex";
+    if (c3) c3.style.display = "flex";
+
     // CONMUTADOR VISUAL DE ENTORNO RESPONSIVO TRADICIONAL PARA HOJAS
-    if (hojaSeleccionada === "Hospitalidad") {
+    if (hojaSeleccionada === "Seguridad") {
+        if (tituloFormulario) tituloFormulario.innerText = "Control de Seguridad (Celda A1)";
+        if (lbl1) lbl1.innerText = "Fecha / Estado";
+        
+        // Ocultamos de forma absoluta los inputs redundantes para dejar un solo campo activo
+        if (c2) c2.style.display = "none"; 
+        if (c3) c3.style.display = "none";
+        if (c4) c4.style.display = "none"; 
+        if (c5) c5.style.display = "none";
+        if (c6) c6.style.display = "none"; 
+        if (c7) c7.style.display = "none"; 
+        if (c8) c8.style.display = "none";
+
+    } else if (hojaSeleccionada === "Hospitalidad") {
         if (tituloFormulario) tituloFormulario.innerText = "Añadir Registro (Hospitalidad)";
         if (lbl1) lbl1.innerText = "Día"; if (lbl2) lbl2.innerText = "Encargado"; if (lbl3) lbl3.innerText = "Contacto";
         if (lbl4) lbl4.innerText = "Dirección";
