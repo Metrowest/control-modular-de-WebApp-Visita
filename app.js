@@ -95,30 +95,38 @@ function inicializarFormulario() {
 }
 
 // =========================================================================
-// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (MODIFICADO)
-// Descripción: Se conecta por script JSONP (Garantiza conexión estable). 
-// Modificación A: Oculta los encabezados duplicados en las hojas horizontales.
-// Modificación B: Separa orientaciones, adaptando las verticales de forma horizontal.
+// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (CORREGIDO)
+// Descripción: Realiza la consulta asíncrona a la base de datos de Google Sheets.
+// Conecta mediante inyección de script (JSONP) nativa compatible con tu servidor.
+// Limpia la fila de encabezados en las hojas horizontales y procesa la columna
+// transponiéndola de forma robusta a una sola fila horizontal en las verticales.
 // =========================================================================
 function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
+    const contenedorTabla = document.getElementById("tablaDatos")?.parentElement;
 
     if (!tablaCabecera || !tablaCuerpo) return;
 
-    // Pausa preventiva de Seguridad
-    if (hoja === "Security" || hoja === "Seguridad") {
+    // 🛑 CLÁUSULA DE PAUSA TEMPORAL: Seguridad se queda congelada momentáneamente
+    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
+        if (contenedorTabla) contenedorTabla.style.display = "none";
         tablaCabecera.innerHTML = "";
-        tablaCuerpo.innerHTML = "<tr><td>Sección en pausa temporal según estrategia.</td></tr>";
+        tablaCuerpo.innerHTML = "";
+        console.log("Pestaña de Seguridad en pausa según estrategia de desarrollo.");
         return;
     }
 
+    // Comportamiento normal de lectura para las hojas estables de la 1 a la 8
+    if (contenedorTabla) contenedorTabla.style.display = "block";
     tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
+    // Construcción de la URL limpia con el callback exacto exigido por tu Code.gs nativo
     const urlSeguraGeneral = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
     
+    // Inyección de red limpia en el documento para saltar bloqueos de CORS
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
@@ -128,6 +136,7 @@ function cargarDatos() {
     document.body.appendChild(scriptPuente);
 }
 
+// 🌟 CALLBACK NATIVO EXIGIDO POR TU SERVIDOR CON INTEGRACIÓN HORIZONTAL Y VERTICAL
 window.recibirDatosDesdeGoogle = function(json) {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
@@ -138,23 +147,27 @@ window.recibirDatosDesdeGoogle = function(json) {
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
-    let htmlCabecera = "<tr>";
-    estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
-    htmlCabecera += "<th>Acciones</th></tr>";
-    tablaCabecera.innerHTML = htmlCabecera;
+    // 1. Dibujar la cabecera dinámica en la pantalla con los nombres de tus campos
+    let htmlCabecheader = "<tr>";
+    estructuras[hoja].campos.forEach(c => htmlCabecheader += `<th>${c}</th>`);
+    htmlCabecheader += "<th>Acciones</th></tr>";
+    tablaCabecera.innerHTML = htmlCabecheader;
 
     if (json && json.status === "success" && json.data && json.data.length > 0) {
         
-        // MODIFICACIÓN DE HOJAS VERTICALES: Transpone los datos de columna a fila
+        // 🌟 REGLA DE PRESENTACIÓN: HOJAS VERTICALES (Hojas 3 a la 8)
+        // Toma la columna de datos de Sheets y la acomoda en una sola fila horizontal limpia
         if (estructuras[hoja].tipo === "vertical") {
             let htmlFila = "<tr>";
+            
             estructuras[hoja].campos.forEach((campo, i) => {
                 let celdaDato = json.data[i];
                 let valorReal = "";
+                
                 if (celdaDato) {
                     let valoresInternos = Object.values(celdaDato);
-                    valorReal = valoresInternos[1] !== undefined ? valoresInternos[1] : valoresInternos[0];
-                    if (String(valorReal).trim() === campo) valorReal = valoresInternos[0] || "";
+                    valorReal = (valoresInternos !== undefined) ? valoresInternos : valoresInternos;
+                    if (String(valorReal).trim() === campo) valorReal = valoresInternos || "";
                 }
                 htmlFila += `<td>${String(valorReal).trim()}</td>`;
             });
@@ -166,8 +179,9 @@ window.recibirDatosDesdeGoogle = function(json) {
             tablaCuerpo.innerHTML = htmlFila;
 
         } else {
-            // MODIFICACIÓN DE HOJAS HORIZONTALES: Oculta la fila de encabezados repetidos
+            // 🌟 REGLA DE PRESENTACIÓN: HOJAS HORIZONTALES (Hojas 1 y 2)
             json.data.forEach((row, index) => {
+                // CORRECCIÓN: Si el renglón repite los encabezados de la hoja, saltamos su dibujo
                 let valoresFila = Object.values(row).map(v => String(v).toLowerCase().trim());
                 if (valoresFila.includes("grupo") || valoresFila.includes("superintendente") || valoresFila.includes("día") || valoresFila.includes("nombre")) {
                     return; 
@@ -190,6 +204,8 @@ window.recibirDatosDesdeGoogle = function(json) {
         tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
     }
 };
+
+
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO
 // Descripción: Método original de tu respaldo de fábrica intacto. Mapea los
