@@ -241,36 +241,62 @@ window.recibirDatosDesdeGoogle = function(json) {
     }
 };
 
-
 // =========================================================================
-// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO
-// 🌟 NOTA: ESTE ES TU CÓDIGO ORIGINAL DE RESPALDO EXACTO SIN ENREDOS NI PARCHES
+// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON LÓGICA DE CONTROL
+// Descripción: Captura el submit del formulario Datos. Si la sección activa es 
+// Seguridad, realiza un bypass asíncrono para ignorar el bucle .forEach general, 
+// aislando la celda A1 e inyectando la propiedad soloCelda: true para no borrar nada.
 // =========================================================================
 async function guardarRegistro(e) {
     e.preventDefault();
     const hoja = document.getElementById("selectorHoja").value;
     const formData = new FormData(e.target);
     const datos = {};
+    let payload = {};
 
-    estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
+    // 🛡️ EL AJUSTE EXACTO: Si es Seguridad, aislamos los datos para proteger las líneas 2 a 8
+    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
+        const valorA1 = formData.get("Fecha / Estado") || formData.get("txtGrupo") || document.getElementById("txtGrupo")?.value;
 
-    const payload = {
-        action: registroEditandoIndex !== null ? "update" : "create",
-        hoja: hoja,
-        tipoEstructura: estructuras[hoja].tipo,
-        index: registroEditandoIndex,
-        datos: datos
-    };
+        payload = {
+            action: "update",            // Forzamos acción de actualización sobre el registro
+            hoja: "Seguridad",
+            tipoEstructura: "vertical",  // Definida como hoja vertical persistente
+            index: 0,                    // Apunta fijamente a la primera línea de datos (Celda A1)
+            datos: { "Fecha / Estado": valorA1 }, // Paquete limpio de un solo parámetro para A1
+            soloCelda: true              // Bandera crítica que le prohíbe al backend vaciar rangos
+        };
+        console.warn("🛡️ [Aislamiento de Celda] Saltando bucle masivo general. Transmitiendo exclusivamente celda A1.");
+    } else {
+        // =========================================================================
+        // COMPORTAMIENTO ORIGINAL INTACTO PARA TODAS LAS DEMÁS HOJAS DEL RESPALDO
+        // =========================================================================
+        estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
 
-    document.getElementById("btnGuardar").innerText = "Procesando...";
+        payload = {
+            action: registroEditandoIndex !== null ? "update" : "create",
+            hoja: hoja,
+            tipoEstructura: estructuras[hoja].tipo,
+            index: registroEditandoIndex,
+            datos: datos
+        };
+    }
+
+    // --- PROCESO DE TRANSMISIÓN TRADICIONAL DE TU APLICACIÓN ---
+    const btnGuardar = document.getElementById("btnGuardar");
+    if (btnGuardar) btnGuardar.innerText = "Procesando...";
 
     try {
-        await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
+        // Realiza la llamada nativa usando la estructura idéntica de transmisión que te funciona
+        await fetch(WEB_APP_URL, { 
+            method: "POST", 
+            body: JSON.stringify(payload) 
+        });
     } catch (err) {
         alert("Error al guardar.");
     }
 
-    document.getElementById("btnGuardar").innerText = "💾 Guardar Registro";
+    if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
     e.target.reset();
     inicializarFormulario();
     cargarDatos();
