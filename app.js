@@ -123,8 +123,8 @@ function cargarDatos() {
     tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
-    // Construcción de la URL limpia con el callback exacto exigido por tu Code.gs nativo
-    const urlSeguraGeneral = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
+    // 🌟 CORRECCIÓN NATIVA: Usamos sheetName en lugar de hoja para que Google lo reconozca
+    const urlSeguraGeneral = `${WEB_APP_URL}?sheetName=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
     
     // Inyección de red limpia en el documento para saltar bloqueos de CORS
     const puenteViejo = document.getElementById("puente-jsonp-google");
@@ -156,7 +156,6 @@ window.recibirDatosDesdeGoogle = function(json) {
     if (json && json.status === "success" && json.data && json.data.length > 0) {
         
         // 🌟 REGLA DE PRESENTACIÓN: HOJAS VERTICALES (Hojas 3 a la 8)
-        // Toma la columna de datos de Sheets y la acomoda en una sola fila horizontal limpia
         if (estructuras[hoja].tipo === "vertical") {
             let htmlFila = "<tr>";
             
@@ -204,7 +203,6 @@ window.recibirDatosDesdeGoogle = function(json) {
         tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
     }
 };
-
 
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO
