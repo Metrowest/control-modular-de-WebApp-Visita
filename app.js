@@ -113,59 +113,86 @@ function inicializarFormulario() {
 }
 
 // =========================================================================
-// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS
-// Descripción: Realiza la petición GET al servidor de Google Sheets mediante la
-// API, dibuja las cabeceras de la tabla en pantalla de forma dinámica según la 
-// estructura de la sección y renderiza las filas de datos con sus respectivos botones.
+// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (CORREGIDO)
+// Descripción: Realiza la petición de datos hacia Google Sheets utilizando
+// una inyección dinámica de etiquetas <script> en red (JSONP). Esto evita los 
+// bloqueos de seguridad de Google y permite cargar la información en limpio.
 // =========================================================================
-async function cargarDatos() {
+
+// 1. FUNCIÓN INTERCEPTORA DE RED: Genera la llamada tolerante hacia la nube
+function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
-    const tablaCabecera = document.getElementById("tablaCabecheader") || document.getElementById("tablaCabecera");
+    const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
 
     if (!tablaCabecera || !tablaCuerpo) return;
 
-    tablaCabecera.innerHTML = "<tr><th>Cargando datos...</th></tr>";
+    tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
-    try {
-        // Petición de lectura nativa hacia el backend en la nube
-        const res = await fetch(`${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}`);
-        const json = await res.json();
+    console.log("Inyectando etiqueta script de red de forma segura para la sección: " + hoja);
 
-        let htmlCabecera = "<tr>";
-        estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
-        htmlCabecera += "<th>Acciones</th></tr>";
-        tablaCabecera.innerHTML = htmlCabecera;
+    // Creamos la URL con el parámetro callback obligatorio exigido por Google Sheets
+    const urlSegura = `${WEB_APP_URL}?accion=leer&hoja=${encodeURIComponent(hoja)}&callback=recibirDatosServidor`;
 
-        if (json.status === "success" && json.data && json.data.length > 0) {
-            json.data.forEach((row, index) => {
-                let htmlFila = "<tr>";
-                estructuras[hoja].campos.forEach(c => htmlFila += `<td>${row[c] || ""}</td>`);
-                
-                // 🌟 PROTECCIÓN DE BORRADO DE HOJA: Al ser Seguridad una celda de control persistente,
-                // removemos mecánicamente el botón de eliminación directa para evitar purgas del libro.
-                let botonesAccion = "";
-                if (hoja === "Seguridad") {
-                    botonesAccion = `<button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>`;
-                } else {
-                    botonesAccion = `
-                        <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
-                        <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
-                    `;
-                }
+    // Removemos cualquier puente de red viejo que haya quedado colgado en el DOM
+    const puenteViejo = document.getElementById("puente-jsonp-google");
+    if (puenteViejo) puenteViejo.remove();
 
-                htmlFila += `<td>${botonesAccion}</td></tr>`;
-                tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
-            });
-        } else {
-            tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
-        }
-    } catch (e) {
-        console.error(e);
-        tablaCabecera.innerHTML = "<tr><th>Error de conexión con el servidor.</th></tr>";
-    }
+    // Inyectamos el elemento en el documento para forzar la sincronización
+    const scriptPuente = document.createElement("script");
+    scriptPuente.id = "puente-jsonp-google";
+    scriptPuente.src = urlSegura;
+    
+    // Si hay un fallo crítico en la red, disparamos el aviso visual
+    scriptPuente.onerror = function() {
+        tablaCabecera.innerHTML = "<tr><th>Error crítico de conexión con el servidor.</th></tr>";
+    };
+
+    document.body.appendChild(scriptPuente);
 }
+
+// 2. FUNCIÓN RECEPTORA CENTRAL (CALLBACK): Procesa el paquete JSON que devuelve Google
+window.recibirDatosServidor = function(json) {
+    const hoja = document.getElementById("selectorHoja").value;
+    const tablaCabecera = document.getElementById("tablaCabecera");
+    const tablaCuerpo = document.getElementById("tablaCuerpo");
+
+    if (!tablaCabecera || !tablaCuerpo) return;
+
+    // Removemos el script del DOM ya que los datos fueron capturados con éxito
+    const puenteViejo = document.getElementById("puente-jsonp-google");
+    if (puenteViejo) puenteViejo.remove();
+
+    let htmlCabecera = "<tr>";
+    estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
+    htmlCabecera += "<th>Acciones</th></tr>";
+    tablaCabecera.innerHTML = htmlCabecera;
+
+    // Clasificamos y pintamos los registros en la interfaz visual
+    if (json && json.status === "success" && json.data && json.data.length > 0) {
+        json.data.forEach((row, index) => {
+            let htmlFila = "<tr>";
+            estructuras[hoja].campos.forEach(c => htmlFila += `<td>${row[c] || ""}</td>`);
+            
+            // Ocultamos el botón de borrar para la hoja Seguridad para proteger las líneas inferiores
+            let botonesAccion = "";
+            if (hoja === "Seguridad") {
+                botonesAccion = `<button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>`;
+            } else {
+                botonesAccion = `
+                    <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
+                    <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
+                `;
+            }
+
+            htmlFila += `<td>${botonesAccion}</td></tr>`;
+            tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
+        });
+    } else {
+        tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
+    }
+};
 
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON AISLAMIENTO DE CELDA
