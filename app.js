@@ -419,4 +419,3 @@ window.addEventListener("appinstalled", () => {
     const banner = document.getElementById("bannerInstalacionPWA");
     if (banner) banner.style.display = "none";
 });
-
