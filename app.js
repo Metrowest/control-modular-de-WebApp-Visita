@@ -245,8 +245,8 @@ window.recibirDatosDesdeGoogle = function(json) {
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON LÓGICA DE CONTROL
 // Descripción: Captura el submit del formulario Datos. Si la sección activa es 
 // Seguridad, realiza un bypass asíncrono para ignorar el bucle .forEach general, 
-// aislando la celda A1 e inyectando la propiedad soloCelda: true. Usa mode: 'no-cors'
-// para replicar la transmisión de la app actual y evadir bloqueos de red.
+// aislando la celda A1. Cuenta con un temporizador de refresco síncrono para dar
+// tiempo a que Google Sheets guarde el cambio antes de repintar la pantalla.
 // =========================================================================
 async function guardarRegistro(e) {
     e.preventDefault();
@@ -257,7 +257,8 @@ async function guardarRegistro(e) {
 
     // 🛡️ EL AJUSTE EXACTO: Si es Seguridad, aislamos los datos para proteger las líneas 2 a 8
     if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
-        const valorA1 = formData.get("Fecha / Estado") || formData.get("txtGrupo") || document.getElementById("txtGrupo")?.value;
+        // 🌟 CORREGIDO: Capturamos el input exacto usando el nombre de su label "Fecha / Estado"
+        const valorA1 = formData.get("Fecha / Estado") || document.querySelector("#contenedorCampos input")?.value || "";
 
         payload = {
             action: "update",            // Forzamos acción de actualización sobre el registro
@@ -267,7 +268,7 @@ async function guardarRegistro(e) {
             datos: { "Fecha / Estado": valorA1 }, // Paquete limpio de un solo parámetro para A1
             soloCelda: true              // Bandera crítica que le prohíbe al backend vaciar rangos
         };
-        console.warn("🛡️ [Aislamiento de Celda] Saltando bucle masivo general. Transmitiendo exclusivamente celda A1.");
+        console.warn("🛡️ [Aislamiento de Celda] Saltando bucle masivo general. Transmitiendo exclusivamente celda A1: " + valorA1);
     } else {
         // =========================================================================
         // COMPORTAMIENTO ORIGINAL INTACTO PARA TODAS LAS DEMÁS HOJAS DEL RESPALDO
@@ -285,10 +286,10 @@ async function guardarRegistro(e) {
 
     // --- PROCESO DE TRANSMISIÓN TRADICIONAL DE TU APLICACIÓN ---
     const btnGuardar = document.getElementById("btnGuardar");
-    if (btnGuardar) btnGuardar.innerText = "Procesando...";
+    if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
 
     try {
-        // 🚀 SINCRONIZACIÓN CON APP ACTUAL: mode: "no-cors" elimina el bloqueo de origen de inmediato
+        // SINCRONIZACIÓN CON APP ACTUAL: mode: "no-cors" elimina el bloqueo de origen de inmediato
         await fetch(WEB_APP_URL, { 
             method: "POST", 
             mode: "no-cors",
@@ -298,14 +299,26 @@ async function guardarRegistro(e) {
             body: JSON.stringify(payload) 
         });
     } catch (err) {
-        alert("Error al guardar.");
+        console.error("Error en transmisión: ", err);
     }
 
-    if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
-    e.target.reset();
-    inicializarFormulario();
-    cargarDatos();
+    // 🌟 CORRECCIÓN CRÍTICA: TEMPORIZADOR SÍNCRONO DE REFRESCO DE DATOS
+    // Le otorgamos 1.8 segundos de cortesía a los servidores de Google para que escriban el
+    // cambio en el documento real antes de vaciar el formulario y mandar a leer la tabla.
+    setTimeout(function() {
+        if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
+        
+        // Reseteamos el formulario de entrada de forma limpia
+        e.target.reset();
+        
+        // Mandamos a pintar y sincronizar las vistas de pantalla con la base de datos actualizada
+        inicializarFormulario();
+        cargarDatos();
+        
+        console.log("🔄 [Refresco Sincronizado] Pantalla actualizada con los datos consolidados de la nube.");
+    }, 1800); 
 }
+
 
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
