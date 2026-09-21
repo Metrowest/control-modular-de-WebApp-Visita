@@ -267,11 +267,8 @@ function editarRegistro(index, rowData) {
 // =========================================================================
 // SECCIÓN 5: INTERCEPTOR DE GUARDADO CON TRADUCTOR DE ENTORNO UNIVERSAL (APP.JS)
 // Ubicación del bloque: CENTRO (PARTE MEDIA - FUNCIÓN 4)
-// Descripción: Empaqueta los datos del formulario antes de transmitir.
-// Incluye un Puente de Rellenado Preventivo exclusivo para la hoja Seguridad:
-// Si detecta esta sección, extrae los textos actuales de las celdas inferiores
-// directamente desde la tabla de la pantalla y se los devuelve a la macro,
-// impidiendo de forma absoluta el vaciado o borrado de las líneas inferiores.
+// Descripción: Empaqueta los datos del formulario antes de transmitir de forma remota.
+// Envía el índice exacto de la línea y el valor del input a la nueva lógica del Code.gs.
 // =========================================================================
 function procesarGuardadoRegistro(evento) {
     evento.preventDefault();
@@ -300,32 +297,8 @@ function procesarGuardadoRegistro(evento) {
     let superint = document.getElementById("txtSuperintendente").value.trim();
     let tel = document.getElementById("txtTelefono").value.trim();
 
-    // =========================================================================
-    // 🛡️ PUENTE DE RELLENADO PREVENTIVO (ANTI-BORRADO ABSOLUTO PARA SEGURIDAD)
-    // =========================================================================
-    if (hoja === "Seguridad") {
-        console.warn("🛡️ [Protección Activa] Recolectando registros inferiores en pantalla para prevenir vaciado de la macro...");
-        
-        // Obtenemos todas las filas horizontales que actualmente pinta la tabla en tu pantalla
-        const filasTabla = document.querySelectorAll("#tablaCuerpo tr");
-        const indiceFilaBase = parseInt(registroEditandoIndex) || 0;
-
-        // Extraemos los textos reales almacenados en las celdas consecutivas de abajo (0 a 7 renglones adelante)
-        const valorFila4 = filasTabla[indiceFilaBase + 3] ? filasTabla[indiceFilaBase + 3].querySelector("td")?.innerText.trim() : "";
-        const valorFila5 = filasTabla[indiceFilaBase + 4] ? filasTabla[indiceFilaBase + 4].querySelector("td")?.innerText.trim() : "";
-        const valorFila6 = filasTabla[indiceFilaBase + 5] ? filasTabla[indiceFilaBase + 5].querySelector("td")?.innerText.trim() : "";
-        const valorFila7 = filasTabla[indiceFilaBase + 6] ? filasTabla[indiceFilaBase + 6].querySelector("td")?.innerText.trim() : "";
-        const valorFila8 = filasTabla[indiceFilaBase + 7] ? filasTabla[indiceFilaBase + 7].querySelector("td")?.innerText.trim() : "";
-
-        // Rellenamos de forma artificial las variables secundarias del bloque de 8 con la misma información existente
-        superint = filasTabla[indiceFilaBase + 1] ? filasTabla[indiceFilaBase + 1].querySelector("td")?.innerText.trim() : "";
-        tel = filasTabla[indiceFilaBase + 2] ? filasTabla[indiceFilaBase + 2].querySelector("td")?.innerText.trim() : "";
-
-        // Concatenamos las variables protegidas en la cadena de texto de red idéntica a la de Estudios/Pastoreo
-        tel = `${encodeURIComponent(tel)}&c4=${encodeURIComponent(valorFila4)}&c5=${encodeURIComponent(valorFila5)}&c6=${encodeURIComponent(valorFila6)}&c7=${encodeURIComponent(valorFila7)}&c8=${encodeURIComponent(valorFila8)}`;
-    }
     // 1. ACOPLE HORIZONTAL TRADICIONAL: Si es Hospitalidad, adjuntamos la dirección
-    else if (hoja === "Hospitalidad") {
+    if (hoja === "Hospitalidad") {
         const direccionExtra = document.getElementById("txtCampo4").value.trim();
         tel = `${tel}&direccion=${encodeURIComponent(direccionExtra)}`;
     }
@@ -346,11 +319,10 @@ function procesarGuardadoRegistro(evento) {
     const script = document.createElement("script");
     script.id = "script-guardar-hojas";
     
-    // Despachamos la URL estructurada de forma nativa entregándole a Google el paquete de 8 completo
-    script.src = `${WEB_APP_URL}?accion=guardar&hoja=${encodeURIComponent(hoja)}&index=${registroEditandoIndex}&grupo=${encodeURIComponent(grupo)}&superintendente=${encodeURIComponent(superint)}&telefono=${(hoja === "Hospitalidad" || hoja === "Seguridad" || hoja.includes("Estudios") || hoja.includes("Pastoreo")) ? tel : encodeURIComponent(tel)}`;
+    // Despachamos la URL limpia. El Code.gs ya sabe qué hacer si la hoja es "Seguridad" sin necesidad de parches
+    script.src = `${WEB_APP_URL}?accion=guardar&hoja=${encodeURIComponent(hoja)}&index=${registroEditandoIndex}&grupo=${encodeURIComponent(grupo)}&superintendente=${encodeURIComponent(superint)}&telefono=${(hoja === "Hospitalidad" || hoja.includes("Estudios") || hoja.includes("Pastoreo")) ? tel : encodeURIComponent(tel)}`;
     document.body.appendChild(script);
 }
-
 
 // =========================================================================
 // SECCIÓN 6: RECEPTOR UNIVERSAL DE RESPUESTAS DEL SERVIDOR (APP.JS)
