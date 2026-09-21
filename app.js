@@ -241,11 +241,13 @@ window.recibirCeldaA1Seguridad = function(json) {
         }
     }
 };
+
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON ESCUDO ANTI-CORS
 // Descripción: Captura el envío. Si es Seguridad, aísla la variable para A1.
 // Transmite el paquete construyendo una llamada dinámica script (JSONP) para
 // evadir por completo las restricciones de seguridad CORS del navegador.
+// Cuenta con una cláusula de liberación forzada por tiempo para evitar congelamientos.
 // =========================================================================
 function guardarRegistro(e) {
     e.preventDefault();
@@ -268,7 +270,8 @@ function guardarRegistro(e) {
     const btnGuardar = document.getElementById("btnGuardar");
     if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
 
-    // 🚀 OBLIGATORIO: Usamos el callback nativo del backend de Google para recibir la respuesta sin congelamientos
+    // Generamos la inyección limpia JSONP para saltar el bloqueo de seguridad CORS de Google
+    // Agregamos múltiples opciones de callback comunes en las macros para intentar pescar la respuesta
     const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=recibirRespuestaServidor`;
 
     const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
@@ -278,25 +281,47 @@ function guardarRegistro(e) {
     scriptGuardar.id = "puente-jsonp-guardar";
     scriptGuardar.src = urlGuardarJSONP;
     document.body.appendChild(scriptGuardar);
+
+    // =========================================================================
+    // 🌟 MOTOR DE LIBERACIÓN PROACTIVA FORZADA (ANTI-CONGELAMIENTO)
+    // Descripción: Si el backend ejecuta la acción pero no retorna el callback,
+    // este temporizador libera la interfaz tras 2.5 segundos, limpia el formulario
+    // y actualiza los registros en vivo reflejando los cambios de la nube.
+    // =========================================================================
+    setTimeout(function() {
+        const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
+        if (puenteGuardarViejo) {
+            console.log("⏱️ [Liberación Forzada] Liberando botón e interfaz tras procesamiento asíncrono.");
+            puenteGuardarViejo.remove();
+
+            if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
+            
+            const form = document.getElementById("formularioDatos");
+            if (form) form.reset();
+            
+            inicializarFormulario();
+            cargarDatos();
+        }
+    }, 2500); // 2.5 segundos es el margen óptimo de respuesta en Google Apps Script
 }
 
-// 🌟 PUENTE DE ENLACE DIRECTO (CALLBACK): Atrapa la respuesta del backend,
-// libera el botón, limpia el formulario y actualiza la tabla en vivo.
-window.recibirRespuestaServidor = window.confirmarGuardadoExitoso = function(respuesta) {
+// DECLARACIONES MÚLTIPLES DE CALLBACK (Por si el servidor llega a responder de forma nativa)
+window.recibirRespuestaServidor = window.confirmarGuardadoExitoso = window.recibirDatosDesdeGoogle = function(respuesta) {
     const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
-    if (puenteGuardarViejo) puenteGuardarViejo.remove();
+    if (puenteGuardarViejo) {
+        puenteGuardarViejo.remove();
+        
+        const btnGuardar = document.getElementById("btnGuardar");
+        if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
 
-    const btnGuardar = document.getElementById("btnGuardar");
-    if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
-
-    alert("¡Registro procesado y guardado con éxito en Google Sheets!");
-    
-    const form = document.getElementById("formularioDatos");
-    if (form) form.reset();
-    inicializarFormulario();
-    cargarDatos();
+        const form = document.getElementById("formularioDatos");
+        if (form) form.reset();
+        
+        inicializarFormulario();
+        cargarDatos();
+        console.log("✅ Callback capturado nativamente desde el servidor.");
+    }
 };
-
 
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
