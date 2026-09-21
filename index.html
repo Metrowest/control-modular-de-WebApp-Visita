@@ -1,88 +1,272 @@
+<!-- =========================================================================
+     CODIGO MADRE SECCIÓN 1 - CONFIGURACIÓN, METADATOS Y CABECERA MAESTRA (CORREGIDA)
+     Ubicación del bloque: CUMBRE ABSOLUTA DEL DOCUMENTO HTML
+     ========================================================================= -->
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Control Modular</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4285F4">
+    <title>Sistema de Control Modular - Superintendentes</title>
 
-    <!-- Metadatos Open Graph para WhatsApp y Redes Sociales -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Sistema de Control Modular">
-    <meta property="og:description" content="Aplicación para la gestión de los registros del Web-App Visita.">
-    <meta property="og:image" content="https://github.com/Metrowest/Rotacion/blob/main/img/og-image.jpg?raw=true/og-image.jpg">
+    <!-- METADATOS OPEN GRAPH CORREGIDOS BAJO NORMA OFICIAL DE REDES -->
+    <meta property="og:description" content="Controla y actualiza de los registros para la visita.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/Metrowest/Visita-Sistema-de-control/refs/heads/main/img/og-image.png">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="512">
     <meta property="og:image:height" content="512">
-    <meta property="og:url" content="https://github.com/Metrowest/control-modular-de-WebApp-Visita/blob/main/img/og-image.jpg">
+    <meta property="og:url" content="https://raw.githubusercontent.com/Metrowest/Visita-Sistema-de-control/refs/heads/main/img/og-image.png">
 
+    <!-- CDN DE FUENTES Y ESTILOS MAESTROS -->
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com" rel="stylesheet"> 
+    <link rel="manifest" href="manifest.json">
+    <!-- Librería externa corregida para los iconos dinámicos -->   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Enlace a tus estilos externos independientes -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- =========================================================================
+         CARPETAS SECCION 1 - BLOQUE DE SCRIPTS ESENCIALES (FUNCIÓN NUMERADA 1.1)
+         ========================================================================= -->
+    <script>
+        // CARPETAS SECCION 1 FUNCION 1.1: ASIGNACIÓN DINÁMICA DE ICONOS SEGÚN FORMATO
+        function obtenerIconoFormato(formato) {
+            if (!formato) return '<i class="fa-solid fa-file" style="color: #7f8c8d;"></i> Archivo';
+            
+            const tipo = formato.toLowerCase().trim();
+
+            // Filtros adaptados para los tipos de archivo oficiales de Google Drive (MimeTypes)
+            if (tipo.includes('pdf')) {
+                return '<i class="fa-solid fa-file-pdf" style="color: #e74c3c;"></i> PDF';
+            } else if (tipo.includes('spreadsheet') || tipo.includes('excel') || tipo.includes('sheet') || tipo.includes('xls')) {
+                return '<i class="fa-solid fa-file-excel" style="color: #27ae60;"></i> Excel';
+            } else if (tipo.includes('document') || tipo.includes('word') || tipo.includes('docx')) {
+                return '<i class="fa-solid fa-file-word" style="color: #2980b9;"></i> Word';
+            } else if (tipo.includes('folder') || tipo.includes('carpeta')) {
+                return '<i class="fa-solid fa-folder" style="color: #f1c40f;"></i> Carpeta';
+            } else if (tipo.includes('zip') || tipo.includes('rar') || tipo.includes('compressed')) {
+                return '<i class="fa-solid fa-file-zipper" style="color: #8e44ad;"></i> Comprimido';
+            } else if (tipo.includes('image') || tipo.includes('png') || tipo.includes('jpg') || tipo.includes('jpeg')) {
+                return '<i class="fa-solid fa-file-image" style="color: #16a085;"></i> Imagen';
+            } else {
+                return '<i class="fa-solid fa-file" style="color: #7f8c8d;"></i> Archivo';
+            }
+        }
+    </script>
 </head>
 
 <body>
-    <header>
-        <h1>📊 Sistema de Control Modular</h1>
-        <button id="btnInstalar" style="display: none;">📲 Instalar</button>
-    </header>
 
-    <main>
-        <!-- Selector de Hojas (🌟 INTEGRADA SECCIÓN SEGURIDAD) -->
-        <section class="card">
-            <h2>Selecciona una Sección</h2>
-            <select id="selectorHoja">
-                <option value="Superintendentes">👥 Superintendentes (Horizontal)</option>
-                <option value="Hospitalidad">🌸 Hospitalidad (Horizontal)</option>
-                <option value="Estudios Día 1">📚 Estudios Día 1 (Vertical)</option>
-                <option value="Estudios Día 2">📚 Estudios Día 2 (Vertical)</option>
-                <option value="Estudios Día 3">📚 Estudios Día 3 (Vertical)</option>
-                <option value="Pastoreo Día 1">🐑 Pastoreo Día 1 (Vertical)</option>
-                <option value="Pastoreo Día 2">🐑 Pastoreo Día 2 (Vertical)</option>
-                <option value="Pastoreo Día 3">🐑 Pastoreo Día 3 (Vertical)</option>
-                <!-- 🌟 AGREGADO: Nueva opción de Seguridad integrada de origen -->
-                <option value="Seguridad">🛡️ Seguridad (Vertical)</option>
-            </select>
+    <!-- =========================================================================
+         CONTENEDOR DE DISTRIBUCIÓN PARALELA MAESTRA (FLEXBOX ORIGINAL DE STYLE.CSS)
+         ========================================================================= -->
+    <div class="contenedor-modulos-paralelos">
 
-            <!-- MODIFICADO: Texto e ícono fijos + Enlace dinámico a la derecha -->
-            <div style="margin-top: 12px; font-size: 1.1rem;">
-                <span style="font-weight: normal; color: #555555;">Sección activa: 📚 </span>
-                <a id="nombreHojaActiva" href="#" target="_blank" rel="noopener noreferrer"
-                    style="font-weight: bold; color: var(--primary); text-decoration: underline; cursor: pointer;"></a>
+        <!-- =========================================================================
+            CARPETAS SECCION 2 - COLUMNA IZQUIERDA: GESTOR DE ARCHIVOS Y COMPONENTES DE DRIVE (FIJO ORIGINAL)
+             ========================================================================= -->
+        <div id="moduloGestorCarpetas" class="tarjeta-modulo">
+            <div class="tarjeta-cabecera">
+                <span class="icono-titulo">📁</span>
+                <h2>Gestor de Archivos (Visita Actual)</h2>
             </div>
-        </section>
 
-        <!-- MODIFICADO: Ahora es un enlace dinámico con estilos adaptables -->
-        <a id="nombreHojaActiva" href="#" target="_blank" rel="noopener noreferrer"
-            style="display: inline-block; margin-top: 12px; font-weight: bold; color: var(--primary); font-size: 1.1rem; text-decoration: underline; cursor: pointer; transition: color 0.2s;"></a>
-        </section>
+            <!-- CARPETAS SECCION 2 FUNCION 2.1: MOTOR DE NAVEGACIÓN ORIGINAL ASÍNCRONO -->
+            <div class="campo-formulario" style="margin-bottom: 15px;">
+                <label for="selectorSubcarpetas" class="etiqueta-selector">Selecciona una Carpeta para Navegar:</label>
+                <select id="selectorSubcarpetas" class="control-selector">
+                    <!-- Las subcarpetas en vivo de tu Google Drive se inyectan aquí por carpetas.js -->
+                </select>
+            </div>
 
-
-        <!-- Formulario de Entrada Dinámico -->
-        <section class="card">
-            <h2 id="formTitulo">Añadir Registro</h2>
-            <form id="formularioDatos">
-                <div id="contenedorCampos" class="grid-formulario"></div>
-                <input type="hidden" id="registroId">
-                <div class="form-acciones">
-                    <button type="submit" id="btnGuardar">💾 Guardar Registro</button>
-                    <button type="button" id="btnCancelar" style="display:none;">Cancelar</button>
+            <!-- CARPETAS SECCION 3 - Módulo de carga de archivos original -->
+            <div class="campo-formulario" style="margin-bottom: 20px;">
+                <label for="archivoSubirDrive" class="etiqueta-selector" style="font-weight: 600; display: block; margin-bottom: 8px;">
+                    Subir Documento o Carpeta a la Sección Activa
+                </label>
+                <!-- El input nativo visible que usabas para buscar archivos -->
+                <input type="file" id="archivoSubirDrive" class="control-selector" style="width: 100%; padding: 8px; border: 1px solid var(--color-borde); border-radius: 8px; background-color: var(--color-fondo);">
+                
+                <div style="display: flex; align-items: center; justify-content: flex-start; gap: 15px; margin-top: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                    <div id="nombreArchivoSeleccionado" class="texto-archivo-seleccionado" style="margin: 0; font-size: 0.85rem; color: var(--color-texto-medio);">Ningún archivo seleccionado</div>
+                    <div id="vistaPreviaIconoDrive" style="font-size: 1.15rem; display: flex; align-items: center;"></div>
                 </div>
-            </form>
-        </section>
 
-        <!-- Tabla / Lista de Registros -->
-        <section class="card">
-            <h2>Registros Guardados</h2>
-            <div class="tabla-contenedor">
-                <table id="tablaDatos">
-                    <thead id="tablaCabecera"></thead>
-                    <tbody id="tablaCuerpo"></tbody>
-                </table>
+                <div id="contenedorPrevisualizacionFoto" class="preview-foto-drive" style="display: none; margin-bottom: 10px;">
+                    <img id="previewFotoDriveImg" src="" alt="Previsualización" style="max-width: 100%; border-radius: 6px;">
+                </div>
+
+                <!-- CARPETAS SECCION 3 FUNCION 3.1: DISPARADOR DE TRANSMISIÓN BINARIA HACIA DRIVE -->
+                <button type="button" id="btnIniciarCargaDrive" class="btn-primario" style="width: 100%;">
+                    🚀 Subir a Carpeta Activa
+                </button>
             </div>
-        </section>
-    </main>
+                        <!-- CARPETAS SECCION 4 - ZONA DE ARCHIVOS DISPONIBLES: Estructura de tabla original de ayer -->
+            <div class="zona-archivos-disponibles">
+                <h3 class="titulo-visor-drive">
+                    <span>📄</span> Archivos Disponibles en esta Carpeta:
+                </h3>
+                <div class="tabla-responsiva contenedor-scroll-drive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre del Archivo</th>
+                                <th>Formato (Tipo)</th>
+                                <th>Enlace</th>
+                            </tr>
+                        </thead>
+                        <!-- CARPETAS SECCION 4 FUNCION 4.1: MATRIZ RECEPTORA DINÁMICA DE ELEMENTOS DE DRIVE -->
+                        <tbody id="tablaCuerpoDrive">
+                            <tr>
+                                <td colspan="3" class="celda-carga">
+                                    Selecciona una carpeta para listar los documentos disponibles...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
+        </div> <!-- CIERRE DE LA COLUMNA IZQUIERDA DE CARPETAS -->
+
+
+        <!-- ============================================================================================
+             APLICACIÓN DE LAS HOJAS (ALINEADA TOTALMENTE A LA DERECHA EN LA GRID MAESTRA)
+             ============================================================================================ -->
+
+        <div class="bloque-hojas-derecha-empaquetado" style="display: flex; flex-direction: column; gap: 24px; flex: 1; width: 100%;">
+
+            <!-- =========================================================================
+                 HOJAS SECCION  1 - CONTROL DE HOJAS Y ENTRADA DE DATOS CENTRALIZADA
+                 ========================================================================= -->
+            <div class="tarjeta-modulo contenedor-selector" style="margin-bottom: 0px;">
+                <label for="selectorHoja" class="etiqueta-seleccion">Selecciona una Sección</label>
+
+                <!-- HOJAS SECCION 1 FUNCION 1.1: SINCRO DOBLE EN LÍNEA INTERACTIVA -->
+                <select id="selectorHoja" class="selector-estilizado" onchange="cargarDatos(); actualizarEnlaceUbicacion();">
+                    <option value="Superintendentes">👥 Superintendentes (Horizontal)</option>
+                    <option value="Hospitalidad">🏨 Hospitalidad (Horizontal)</option>
+                    <option value="Estudios Día 1">📚 Estudios Día 1 (Vertical)</option>
+                    <option value="Estudios Día 2">📚 Estudios Día 2 (Vertical)</option>
+                    <option value="Estudios Día 3">📚 Estudios Día 3 (Vertical)</option>
+                    <option value="Pastoreo Día 1">🐑 Pastoreo Día 1 (Vertical)</option>
+                    <option value="Pastoreo Día 2">🐑 Pastoreo Día 2 (Vertical)</option>
+                    <option value="Pastoreo Día 3">🐑 Pastoreo Día 3 (Vertical)</option>
+                </select>
+
+                <!-- HOJAS SECCION 2 - Enlace dinámico original con id="enlaceDinamico" -->
+                <div class="enlace-seccion-activa" style="margin-top: 10px; font-weight: bold;">
+                    Sección activa: <a href="https://github.io" target="_blank" id="enlaceDinamico" class="link-moderno" style="color: var(--color-turquesa); text-decoration: underline; font-weight: bold;">👥 Superintendentes (Horizontal)</a>
+                </div>
+            </div>
+
+            <!-- =========================================================================
+                 HOJAS SECCION  3 - FORMULARIO DE CAPTURA VERTICAL CONSOLIDADO (SHEETS)
+                 Ubicación del bloque: CENTRO INFERIOR DE LA PANTALLA
+                 ========================================================================= -->
+            <div class="tarjeta-modulo">
+                <div class="tarjeta-cabecera">
+                    <div class="icono-titulo">📋</div>
+                    <h2 id="formTitulo">Añadir Registro</h2>
+                </div>
+
+                <!-- Formulario sincronizado al 100% con tu backend -->
+                <form id="formularioSuperintendentes" class="formulario-estilizado">
+
+                    <div class="grid-formulario">
+                        <div class="campo-formulario" id="contenedorCampo1">
+                            <label id="lblCampo1" for="txtGrupo">Grupo / Día</label>
+                            <!-- SINCRO PURA: Se removieron los atributos 'name' para evitar bloqueos MIME de tipo CORS con Google -->
+                            <input type="text" id="txtGrupo" placeholder="Ej. #89" required>
+                        </div>
+
+                        <div class="campo-formulario" id="contenedorCampo2">
+                            <label id="lblCampo2" for="txtSuperintendente">Superintendente / Visitante</label>
+                            <input type="text" id="txtSuperintendente" placeholder="Nombre completo" required>
+                        </div>
+
+                        <div class="campo-formulario" id="contenedorCampo3">
+                            <label id="lblCampo3" for="txtTelefono">Teléfono / Acompañante</label>
+                            <input type="text" id="txtTelefono" placeholder="Información" required>
+                        </div>
+
+                        <div class="campo-formulario" id="contenedorCampo4" style="display: none;">
+                            <label id="lblCampo4" for="txtCampo4">Campo 4</label>
+                            <input type="text" id="txtCampo4" placeholder="Información extra">
+                        </div>
+
+                        <div class="campo-formulario" id="contenedorCampo5" style="display: none;">
+                            <label id="lblCampo5" for="txtCampo5">Campo 5</label>
+                            <input type="text" id="txtCampo5" placeholder="Información extra">
+                        </div>
+
+                        <div class="campo-formulario" id="contenedorCampo6" style="display: none;">
+                            <label id="lblCampo6" for="txtCampo6">Campo 6</label>
+                            <input type="text" id="txtCampo6" placeholder="Información extra">
+                        </div>
+
+                        <div class="campo-formulario" id="contenedorCampo7" style="display: none;">
+                            <label id="lblCampo7" for="txtCampo7">Campo 7</label>
+                            <input type="text" id="txtCampo7" placeholder="Información extra">
+                        </div>
+
+                        <div class="campo-formulario" id="contenedorCampo8" style="display: none;">
+                            <label id="lblCampo8" for="txtCampo8">Campo 8</label>
+                            <input type="text" id="txtCampo8" placeholder="Información extra">
+                        </div>
+                    </div>
+
+                    <div class="bloque-botones">
+                        <button type="submit" id="btnGuardar" class="btn-primario">
+                            <span class="icono-btn">💾</span> Guardar Registro
+                        </button>
+                        <button type="button" id="btnCancelar" class="btn-secundario" style="display: none;">
+                            <span class="icono-btn">❌</span> Cancelar Edición
+                        </button>
+                    </div>
+                </form>
+            </div> <!-- AQUÍ TERMINA EL FORMULARIO DE AÑADIR REGISTRO -->
+                         <!-- =========================================================================
+                 HOJAS SECCION  4 - REJILLA GRÁFICA DE REGISTROS CON ENCABEZADOS LIBRES (SHEETS)
+                 Ubicación del bloque: BASE ABSOLUTA DE LA INTERFAZ
+                 ========================================================================= -->
+            <div class="tarjeta-modulo">
+                <div class="tarjeta-cabecera">
+                    <div class="icono-titulo">📂</div>
+                    <h2>Registros Almacenados en la Hoja</h2>
+                </div>
+
+                <div class="tabla-responsiva">
+                    <table id="tablaRegistros">
+                        <thead id="tablaCabecera"></thead>
+                        <!-- HOJAS SECCION 4 FUNCION 4.1: INYECTOR DE FILAS DINÁMICAS RE-ESTRUTURADAS POR JS -->
+                        <tbody id="tablaCuerpo">
+                            <tr>
+                                <td class="celda-carga">
+                                    <div class="spinner-carga"></div>
+                                    Cargando base de datos desde Google Sheets...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div> <!-- FIN DEL EMPAQUETADO DE HOJAS DERECHA -->
+
+    </div> <!-- CIERRE DE CONTENEDOR-MODULOS-PARALELOS GLOBAL -->
+
+    <!--CODIGO MADRE SECCIÓN 2 - BANNER PWA REQUERIDO -->
+    <div id="bannerInstalacionPWA">
+        <p>Instala la aplicación en tu dispositivo para un acceso rápido.</p>
+        <button id="btnInstalarPWA">Instalar</button>
+    </div>
+
+    <!-- VÍNCULOS DE CONTROL CENTRAL -->
+    <script src="carpetas.js"></script>
     <script src="app.js"></script>
 </body>
 
