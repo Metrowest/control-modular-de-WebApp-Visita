@@ -255,7 +255,7 @@ async function guardarRegistro(e) {
     cargarDatos();
 }
 
-javascript// =========================================================================
+// =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
 // Descripción: Administra la carga de datos en los campos superiores para su 
 // edición, empaqueta las peticiones POST de eliminación física de registros
