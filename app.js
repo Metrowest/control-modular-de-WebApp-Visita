@@ -19,26 +19,22 @@ const enlacesExternos = {
     "Seguridad": "https://metrowest.github.io/Visita/seguridad.html"
 };
 
-
 // =========================================================================
 // SECCIÓN 2: DICCIONARIO DE ESTRUCTURAS DE DATOS (ARQUITECTURA DE HOJAS)
-// Descripción: Define el comportamiento modular de cada pestaña (horizontal o vertical)
-// y delimita estrictamente qué campos de entrada se procesarán en el formulario.
+// Descripción: Define los nombres rigurosos de los encabezados y campos que 
+// se mostrarán en la sección "Añadir Registro" / "Editar Registros" según la hoja.
 // =========================================================================
-// 🌟 INTEGRADO: Declaramos "Seguridad" como vertical con un ÚNICO campo de control ("Fecha / Estado")
-// Esto forzará mecánicamente a que la interfaz dibuje un solo input en la pantalla.
 const estructuras = {
-    "Superintendentes": { tipo: "horizontal", campos: ["Grupo", "Superintendente", "Teléfono"] },
-    "Hospitalidad": { tipo: "horizontal", campos: ["Día", "Nombre", "Teléfono", "Dirección"] },
-    "Estudios Día 1": { tipo: "vertical", campos: ["Día/Hora", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
-    "Estudios Día 2": { tipo: "vertical", campos: ["Día/Hora", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
-    "Estudios Día 3": { tipo: "vertical", campos: ["Día/Hora", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
+    "Superintendentes": { tipo: "horizontal", campos: ["Grupo / Día", "Superintendente / Visitante", "Teléfono / Acompañante"] },
+    "Hospitalidad": { tipo: "horizontal", campos: ["Grupo / Día", "Superintendente / Visitante", "Teléfono / Acompañante", "Dirección"] },
+    "Estudios Día 1": { tipo: "vertical", campos: ["Día", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
+    "Estudios Día 2": { tipo: "vertical", campos: ["Día", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
+    "Estudios Día 3": { tipo: "vertical", campos: ["Día", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
     "Pastoreo Día 1": { tipo: "vertical", campos: ["Día", "Acompañante", "Teléfono", "Hogar", "Contacto", "Dirección", "Detalles", "Objetivo"] },
     "Pastoreo Día 2": { tipo: "vertical", campos: ["Día", "Acompañante", "Teléfono", "Hogar", "Contacto", "Dirección", "Detalles", "Objetivo"] },
     "Pastoreo Día 3": { tipo: "vertical", campos: ["Día", "Acompañante", "Teléfono", "Hogar", "Contacto", "Dirección", "Detalles", "Objetivo"] },
-    "Seguridad": { tipo: "vertical", campos: ["Fecha / Estado"] }
+    "Seguridad": { tipo: "vertical", campos: ["Fecha / Estado"] } // 🌟 Un solo input para la celda A1
 };
-
 
 // =========================================================================
 // SECCIÓN 3: CONTROL DE ESTADO GLOBAL E INICIALIZADORES DEL DOM
@@ -111,47 +107,61 @@ function inicializarFormulario() {
         });
     }
 }
+
 // =========================================================================
 // SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (CORREGIDO)
-// Descripción: Realiza la petición de datos hacia Google Sheets utilizando
-// una inyección dinámica de etiquetas <script> en red (JSONP). Esto evita los 
-// bloqueos de seguridad de Google y permite cargar la información en limpio.
+// Descripción: Realiza la petición asíncrona mediante JSONP. Si es la hoja 
+// Seguridad, esconde de raíz la tabla inferior para no mostrar las 67 líneas 
+// y dejar solo el input superior de control. En las demás hojas, renderiza todo.
 // =========================================================================
 
-// 1. FUNCIÓN INTERCEPTORA DE RED: Genera la llamada tolerante hacia la nube
 function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
+    const contenedorTabla = document.getElementById("tablaDatos")?.parentElement;
 
     if (!tablaCabecera || !tablaCuerpo) return;
 
+    // 🌟 REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD:
+    // Ocultamos la grilla completa en la interfaz para que no se listen las líneas inferiores
+    if (hoja === "Seguridad") {
+        if (contenedorTabla) contenedorTabla.style.display = "none";
+        tablaCabecera.innerHTML = "";
+        tablaCuerpo.innerHTML = "";
+        console.log("🛡️ [Control A1] Ocultando tabla de 67 líneas para forzar edición única en el formulario.");
+        
+        // Petición silenciosa para precargar el valor actual de la celda A1 en tu input superior
+        const urlSegura = `${WEB_APP_URL}?accion=leer&hoja=Seguridad&callback=precargarCeldaA1`;
+        inyectarScriptRed(urlSegura);
+        return;
+    }
+
+    // Comportamiento normal para las hojas de la 1 a la 8
+    if (contenedorTabla) contenedorTabla.style.display = "block";
     tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
-    console.log("Inyectando etiqueta script de red de forma segura para la sección: " + hoja);
-
-    // URL configurada con el callback exacto que tu Code.gs reconoce nativamente
     const urlSegura = `${WEB_APP_URL}?accion=leer&hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
+    inyectarScriptRed(urlSegura);
+}
 
-    // Removemos cualquier puente de red viejo que haya quedado colgado en el DOM
+// Función auxiliar para realizar la inyección limpia en el DOM
+function inyectarScriptRed(url) {
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
-    // Inyectamos el elemento en el documento para forzar la sincronización
     const scriptPuente = document.createElement("script");
     scriptPuente.id = "puente-jsonp-google";
-    scriptPuente.src = urlSegura;
-    
-    // Si hay un fallo crítico en la red, disparamos el aviso visual
+    scriptPuente.src = url;
     scriptPuente.onerror = function() {
-        tablaCabecera.innerHTML = "<tr><th>Error crítico de conexión con el servidor.</th></tr>";
+        const tablaCabecera = document.getElementById("tablaCabecera");
+        if (tablaCabecera) tablaCabecera.innerHTML = "<tr><th>Error crítico de conexión con el servidor.</th></tr>";
     };
-
     document.body.appendChild(scriptPuente);
 }
 
-// 2. FUNCIÓN RECEPTORA CENTRAL (CALLBACK NATIVO DEL BACKEND)
+// 🌟 CALLBACK EXCLUSIVO: Carga los datos de las hojas de la 1 a la 8 en la tabla
 window.recibirDatosDesdeGoogle = function(json) {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
@@ -159,47 +169,48 @@ window.recibirDatosDesdeGoogle = function(json) {
 
     if (!tablaCabecera || !tablaCuerpo) return;
 
-    // Removemos el script del DOM ya que los datos fueron capturados con éxito
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
     let htmlCabecera = "<tr>";
     estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
     htmlCabecera += "<th>Acciones</th></tr>";
-    tablaCabecera.innerHTML = htmlCabecera;
+    tablaCabecera.innerHTML = htmlCabecheader = htmlCabecera;
 
-    // Clasificamos y pintamos los registros en la interfaz visual
     if (json && json.status === "success" && json.data && json.data.length > 0) {
         json.data.forEach((row, index) => {
             let htmlFila = "<tr>";
-            
-            // 🌟 MOTOR DE EXTRACCIÓN TOLERANTE:
-            // Recorremos los campos e intentamos extraer el dato de tres formas distintas para asegurar que suba
             estructuras[hoja].campos.forEach((campo, i) => {
-                // Opción A: Por el nombre exacto del campo (Ej: row["Grupo"])
-                // Opción B: Por indexación numérica directa (Ej: row[0] o row[1]) si viene como Array
-                // Opción C: Por propiedad genérica del objeto (Ej: row["col" + i] o el objeto ordenado de Google)
                 let valorCelda = row[campo] || row[i] || Object.values(row)[i] || "";
-                
                 htmlFila += `<td>${valorCelda}</td>`;
             });
-            
-            // Ocultamos el botón de borrar para la hoja Seguridad para proteger las líneas inferiores
-            let botonesAccion = "";
-            if (hoja === "Seguridad") {
-                botonesAccion = `<button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>`;
-            } else {
-                botonesAccion = `
-                    <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
-                    <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
-                `;
-            }
 
-            htmlFila += `<td>${botonesAccion}</td></tr>`;
+            htmlFila += `<td>
+                <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
+                <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
+            </td></tr>`;
             tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
         });
     } else {
         tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
+    }
+};
+
+// 🌟 CALLBACK DE PRECARGA: Inyecta de forma síncrona el estado real de A1 en tu único input superior
+window.precargarCeldaA1 = function(json) {
+    const puenteViejo = document.getElementById("puente-jsonp-google");
+    if (puenteViejo) puenteViejo.remove();
+
+    if (json && json.status === "success" && json.data && json.data.length > 0) {
+        const fila1 = json.data[0];
+        const valorRealA1 = fila1["Fecha / Estado"] || fila1[0] || Object.values(fila1)[0] || "";
+        
+        const inputA1 = document.querySelector("#contenedorCampos input");
+        if (inputA1) {
+            inputA1.value = valorRealA1;
+            // Activamos de forma simulada el título de edición para que el usuario sepa que está listo para modificar
+            document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
+        }
     }
 };
 
