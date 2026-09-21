@@ -111,8 +111,8 @@ function inicializarFormulario() {
 // =========================================================================
 // SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (PERFECTO)
 // Descripción: Consulta asíncronamente a Google Sheets. Si la hoja es Seguridad,
-// esconde la tabla inferior de control. En las verticales de la 3 a la 8, procesa
-// la columna transponiéndola de forma robusta e infalible a una sola fila horizontal.
+// esconde la tabla inferior de control de control de forma física. En las demás,
+// renderiza las grillas de datos adaptando dinámicamente formatos horizontales y verticales.
 // =========================================================================
 function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
@@ -123,23 +123,23 @@ function cargarDatos() {
     if (!tablaCabecera || !tablaCuerpo) return;
 
     // 🛡️ REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD
-    if (hoja === "Seguridad") {
+    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
         if (contenedorTabla) contenedorTabla.style.display = "none";
         tablaCabecera.innerHTML = "";
         tablaCuerpo.innerHTML = "";
-        console.log("🛡️ [Control A1] Tabla inferior oculta de forma segura.");
+        console.log("🛡️ [Control A1] Ocultando tabla de 67 líneas de forma definitiva.");
         
-        const urlSeguraA1 = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirCeldaA1Seguridad`;
+        const urlSeguraA1 = `${WEB_APP_URL}?hoja=${encodeURIComponent("Seguridad")}&callback=recibirCeldaA1SeguridadExclusivo`;
         inyectarScriptRed(urlSeguraA1);
         return;
     }
 
-    // Comportamiento normal para las hojas de la 1 a la 8
+    // Comportamiento normal de lectura para las hojas de la 1 a la 8
     if (contenedorTabla) contenedorTabla.style.display = "block";
     tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
-    const urlSeguraGeneral = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
+    const urlSeguraGeneral = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogleExclusivo`;
     inyectarScriptRed(urlSeguraGeneral);
 }
 
@@ -153,7 +153,8 @@ function inyectarScriptRed(url) {
     document.body.appendChild(scriptPuente);
 }
 
-window.recibirDatosDesdeGoogle = function(json) {
+// CALLBACK DE LECTURA DE DATOS TOTALMENTE RENOMBRADO PARA EVITAR COLISIONES
+window.recibirDatosDesdeGoogleExclusivo = function(json) {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
@@ -170,9 +171,7 @@ window.recibirDatosDesdeGoogle = function(json) {
 
     if (json && json.status === "success" && json.data && json.data.length > 0) {
         
-        // 🌟 PROCESAMIENTO VERTICAL SEGURO (Hojas 3 a la 8):
-        // Mapeo absoluto e infalible. Si viene una estructura de celdas en cascada,
-        // extraemos el valor de cada celda directamente por su posición en la matriz devuelta.
+        // PROCESAMIENTO VERTICAL SEGURO (Hojas 3 a la 8)
         if (estructuras[hoja].tipo === "vertical") {
             let htmlFila = "<tr>";
             
@@ -182,7 +181,6 @@ window.recibirDatosDesdeGoogle = function(json) {
                 
                 if (celdaDato) {
                     let valoresInternos = Object.values(celdaDato);
-                    // Si el primer elemento es igual al label, el valor real está en la segunda posición (columna B)
                     valorReal = valoresInternos[1] !== undefined ? valoresInternos[1] : valoresInternos[0];
                     if (String(valorReal).trim() === campo) valorReal = valoresInternos[0] || "";
                 }
@@ -221,7 +219,8 @@ window.recibirDatosDesdeGoogle = function(json) {
     }
 };
 
-window.recibirCeldaA1Seguridad = function(json) {
+// CALLBACK DE PRECARGA REASIGNADO INDEPENDIENTE PARA SEGURIDAD (Celda A1)
+window.recibirCeldaA1SeguridadExclusivo = function(json) {
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
@@ -244,10 +243,9 @@ window.recibirCeldaA1Seguridad = function(json) {
 
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON ESCUDO ANTI-CORS
-// Descripción: Captura el envío. Si es Seguridad, aísla la variable para A1.
-// Transmite el paquete construyendo una llamada dinámica script (JSONP) para
-// evadir por completo las restricciones de seguridad CORS del navegador.
-// Cuenta con una cláusula de liberación forzada por tiempo para evitar congelamientos.
+// Descripción: Captura el envío. Si es Seguridad, envía exclusivamente A1.
+// Transmite usando un canal de callback exclusivo llamado recibirConfirmacionGuardadoNativo
+// Cuenta con cláusula de liberación por tiempo de 2.5 segundos para evitar bloqueos.
 // =========================================================================
 function guardarRegistro(e) {
     e.preventDefault();
@@ -257,7 +255,7 @@ function guardarRegistro(e) {
     let parametrosEnvio = "";
 
     // 🛡️ ENCAPSULAMIENTO EN RUTA SÍNCRONA SEGURA (ANTI-CORS Y ANTI-BORRADO)
-    if (hoja === "Seguridad") {
+    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
         const valorA1 = formData.get("Fecha / Estado");
         parametrosEnvio = `action=update&hoja=Seguridad&tipoEstructura=vertical&index=0&soloCelda=true&txtGrupo=${encodeURIComponent(valorA1)}&datos=${encodeURIComponent(JSON.stringify({"Fecha / Estado": valorA1}))}`;
         console.warn("🛡️ [Bypass Activado] Transmitiendo exclusivamente celda A1.");
@@ -270,7 +268,7 @@ function guardarRegistro(e) {
     const btnGuardar = document.getElementById("btnGuardar");
     if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
 
-    // 🚀 ASIGNACIÓN DE CALLBACK EXCLUSIVO: Usamos una función única de guardado para no colisionar con la Sección 5
+    // Canal único de guardado que no colisiona con el canal de lectura de la Sección 5
     const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=recibirConfirmacionGuardadoNativo`;
 
     const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
@@ -281,16 +279,11 @@ function guardarRegistro(e) {
     scriptGuardar.src = urlGuardarJSONP;
     document.body.appendChild(scriptGuardar);
 
-    // =========================================================================
-    // 🌟 MOTOR DE LIBERACIÓN PROACTIVA FORZADA (ANTI-CONGELAMIENTO)
-    // Descripción: Si el backend ejecuta la acción pero no retorna el callback,
-    // este temporizador libera la interfaz tras 2.5 segundos, limpia el formulario
-    // y actualiza los registros en vivo reflejando los cambios de la nube.
-    // =========================================================================
+    // MOTOR DE LIBERACIÓN PROACTIVA FORZADA
     setTimeout(function() {
         const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
         if (puenteGuardarViejo) {
-            console.log("⏱️ [Liberación Forzada] Liberando botón e interfaz tras procesamiento asíncrono.");
+            console.log("⏱️ [Liberación Forzada] Liberando botón tras transmisión.");
             puenteGuardarViejo.remove();
 
             if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
@@ -301,11 +294,10 @@ function guardarRegistro(e) {
             inicializarFormulario();
             cargarDatos();
         }
-    }, 2500); // 2.5 segundos es el margen óptimo de respuesta en Google Apps Script
+    }, 2500); 
 }
 
-// 🌟 CALLBACK DE ENVÍO PURIFICADO E INDEPENDIENTE
-// Al remover la igualación con recibirDatosDesdeGoogle, desbloqueamos la Sección 5 por completo
+// CALLBACK DE GUARDADO ÚNICO Y PURIFICADO
 window.recibirConfirmacionGuardadoNativo = function(respuesta) {
     const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
     if (puenteGuardarViejo) {
@@ -319,10 +311,9 @@ window.recibirConfirmacionGuardadoNativo = function(respuesta) {
         
         inicializarFormulario();
         cargarDatos();
-        console.log("✅ Callback de guardado capturado nativamente desde el servidor.");
+        console.log("✅ Transmisión asíncrona completada de forma nativa.");
     }
 };
-
 
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
@@ -330,95 +321,43 @@ window.recibirConfirmacionGuardadoNativo = function(respuesta) {
 // edición mediante un motor tolerante a la estructura del objeto devuelto por 
 // el servidor. También gestiona las peticiones de borrado y la cancelación del estado.
 // =========================================================================
-
 window.editarRegistro = (index, rowData) => {
     registroEditandoIndex = index;
-    document.getElementById("formTitulo").innerText = "Editar Registro";
+    
+    if (document.getElementById("formTitulo")) {
+        document.getElementById("formTitulo").innerText = "Editar Registro";
+    }
     
     const btnCancelar = document.getElementById("btnCancelar");
     if (btnCancelar) btnCancelar.style.display = "inline-block";
 
-    // Capturamos todos los inputs dinámicos que se dibujaron en pantalla
     const campos = document.querySelectorAll("#contenedorCampos input");
-    
-    // 🌟 MOTOR DE CARGA TOLERANTE PARA EDICIÓN:
-    // Mapeamos de forma secuencial cada campo según su posición en el formulario
     campos.forEach((input, i) => {
-        // Opción A: Intenta extraer el dato por el nombre del input (Ej: rowData["Grupo"])
-        // Opción B: Intenta extraer por el índice numérico correlativo (Ej: rowData[0], rowData[1])
-        // Opción C: Extrae el valor directamente por la posición de los datos en el objeto de Google
         let valorRecuperado = rowData[input.name] || rowData[i] || Object.values(rowData)[i] || "";
-        
         input.value = valorRecuperado;
     });
-    
-    console.log("✏️ Registro cargado con éxito en los campos de edición superior utilizando mapeo posicional.");
 };
 
 window.borrarRegistro = async (index) => {
     if (!confirm("¿Seguro que deseas eliminar este registro?")) return;
     const hoja = document.getElementById("selectorHoja").value;
 
-    const payload = {
-        action: "delete",
-        hoja: hoja,
-        tipoEstructura: estructuras[hoja].tipo,
-        index: index
-    };
-
-    try {
-        await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
-    } catch (err) {
-        console.error("Error al eliminar el registro: ", err);
-    }
+    const parametrosBorrar = `action=delete&hoja=${encodeURIComponent(hoja)}&tipoEstructura=${estructuras[hoja].tipo}&index=${index}`;
+    const urlBorrar = `${WEB_APP_URL}?${parametrosBorrar}&callback=cargarDatos`;
     
-    cargarDatos();
+    const scriptBorrar = document.createElement("script");
+    scriptBorrar.src = urlBorrar;
+    document.body.appendChild(scriptBorrar);
 };
 
 function cancelarEdicion() {
     registroEditandoIndex = null;
-    
-    const formTitulo = document.getElementById("formTitulo");
-    if (formTitulo) formTitulo.innerText = "Añadir Registro";
-    
-    const btnCancelar = document.getElementById("btnCancelar");
-    if (btnCancelar) btnCancelar.style.display = "none";
-    
+    if (document.getElementById("formTitulo")) {
+        document.getElementById("formTitulo").innerText = "Añadir Registro";
+    }
+    if (document.getElementById("btnCancelar")) {
+        document.getElementById("btnCancelar").style.display = "none";
+    }
     const form = document.getElementById("formularioDatos");
     if (form) form.reset();
 }
-
-// =========================================================================
-// SECCIÓN 8: MAQUINARIA INTERACTIVA DE INSTALACIÓN PWA Y SERVICE WORKER
-// Descripción: Administra la captura del evento de instalación nativa para 
-// desplegar el botón en el encabezado, gestiona la elección del usuario y 
-// da de alta el archivo sw.js para permitir la persistencia en caché.
-// =========================================================================
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const btnInstalar = document.getElementById('btnInstalar');
-    if (btnInstalar) btnInstalar.style.display = 'block';
-});
-
-const btnInstalarElement = document.getElementById('btnInstalar');
-if (btnInstalarElement) {
-    btnInstalarElement.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                const btnInstalar = document.getElementById('btnInstalar');
-                if (btnInstalar) btnInstalar.style.display = 'none';
-            }
-            deferredPrompt = null;
-        }
-    });
-}
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
-}
-
