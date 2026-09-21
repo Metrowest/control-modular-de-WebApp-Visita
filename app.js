@@ -9,6 +9,20 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5f-HM7FAWTxf3oDPF
 // Variable global de memoria para controlar el índice del registro en edición
 let registroEditandoIndex = null;
 
+// 🌟 DICCIONARIO COMPLETO: Enlaces a tus páginas web reales de GitHub Pages
+const ENLACES_HOJAS = {
+    "Superintendentes": "https://metrowest.github.io/Visita/desastre.html#punto-superintendentes",
+    "Hospitalidad": "https://metrowest.github.io/Visita/Almuerzo.html",
+    "Estudios Día 1": "https://metrowest.github.io/Visita/estudio1A.html",
+    "Estudios Día 2": "https://metrowest.github.io/Visita/estudio2A.html",
+    "Estudios Día 3": "https://metrowest.github.io/Visita/estudio3A.html",
+    "Pastoreo Día 1": "https://metrowest.github.io/Visita/pastoreo1A.html",
+    "Pastoreo Día 2": "https://metrowest.github.io/Visita/pastoreo2A.html",
+    "Pastoreo Día 3": "https://metrowest.github.io/Visita/pastoreo3A.html",
+    "Seguridad": "https://metrowest.github.io/Visita/seguridad.html"
+};
+
+
 // =========================================================================
 // SECCIÓN 2: DISPARADOR AUTOMÁTICO DE LECTURA DINÁMICA (APP.JS)
 // Ubicación del bloque: CENTRO (PARTE MEDIA - FUNCIÓN 1)
