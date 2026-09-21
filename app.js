@@ -1,12 +1,9 @@
 // =========================================================================
 // SECCIÓN 1: VARIABLES GLOBALES Y CONFIGURACIÓN DE CONEXIÓN
-// Descripción: Define la URL del backend de Google Apps Script para la transmisión 
-// de datos y centraliza el diccionario de enlaces externos de la WebApp.
+// Descripción: Centraliza la URL del backend y las direcciones dinámicas.
 // =========================================================================
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5f-HM7FAWTxf3oDPFafcZ4EUL-5Bbt6UtBU6JgqsHIqEGAN1Z5TFyx3af7B6nijvAvg/exec";
 
-// Diccionario de enlaces externos para cada pestaña
-// 🌟 INTEGRADO: Enlace nativo de la hoja Seguridad desde el principio
 const enlacesExternos = {
     "Superintendentes": "https://metrowest.github.io/Visita/desastre.html#punto-superintendentes",
     "Hospitalidad": "https://metrowest.github.io/Visita/Almuerzo.html",
@@ -21,25 +18,22 @@ const enlacesExternos = {
 
 // =========================================================================
 // SECCIÓN 2: DICCIONARIO DE ESTRUCTURAS DE DATOS (ARQUITECTURA DE HOJAS)
-// Descripción: Define los nombres rigurosos de los encabezados y campos que 
-// se mostrarán en la sección "Añadir Registro" / "Editar Registros" según la hoja.
+// Descripción: Mapeo estricto de campos de la aplicación.
 // =========================================================================
 const estructuras = {
-    "Superintendentes": { tipo: "horizontal", campos: ["Grupo / Día", "Superintendente / Visitante", "Teléfono / Acompañante"] },
-    "Hospitalidad": { tipo: "horizontal", campos: ["Grupo / Día", "Superintendente / Visitante", "Teléfono / Acompañante", "Dirección"] },
-    "Estudios Día 1": { tipo: "vertical", campos: ["Día", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
-    "Estudios Día 2": { tipo: "vertical", campos: ["Día", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
-    "Estudios Día 3": { tipo: "vertical", campos: ["Día", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
+    "Superintendentes": { tipo: "horizontal", campos: ["Grupo", "Superintendente", "Teléfono"] },
+    "Hospitalidad": { tipo: "horizontal", campos: ["Día", "Nombre", "Teléfono", "Dirección"] },
+    "Estudios Día 1": { tipo: "vertical", campos: ["Día/Hora", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
+    "Estudios Día 2": { tipo: "vertical", campos: ["Día/Hora", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
+    "Estudios Día 3": { tipo: "vertical", campos: ["Día/Hora", "Visitante", "Acompañante", "Teléfono", "Estudiante", "Dirección", "Publicación", "Detalles"] },
     "Pastoreo Día 1": { tipo: "vertical", campos: ["Día", "Acompañante", "Teléfono", "Hogar", "Contacto", "Dirección", "Detalles", "Objetivo"] },
     "Pastoreo Día 2": { tipo: "vertical", campos: ["Día", "Acompañante", "Teléfono", "Hogar", "Contacto", "Dirección", "Detalles", "Objetivo"] },
-    "Pastoreo Día 3": { tipo: "vertical", campos: ["Día", "Acompañante", "Teléfono", "Hogar", "Contacto", "Dirección", "Detalles", "Objetivo"] },
-    "Seguridad": { tipo: "vertical", campos: ["Fecha / Estado"] } // 🌟 Un solo input para la celda A1
+    "Pastoreo Día 3": { tipo: "vertical", campos: ["Día", "Acompañante", "Teléfono", "Hogar", "Contacto", "Dirección", "Detalles", "Objetivo"] }
 };
 
 // =========================================================================
 // SECCIÓN 3: CONTROL DE ESTADO GLOBAL E INICIALIZADORES DEL DOM
-// Descripción: Administra el índice del registro activo bajo edición y coordina 
-// los escuchadores de eventos principales en el arranque de la aplicación (DOMContentLoaded).
+// Descripción: Escucha y coordina los eventos de arranque del navegador.
 // =========================================================================
 let registroEditandoIndex = null;
 
@@ -58,35 +52,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // =========================================================================
 // SECCIÓN 4: RENDERIZADO DINÁMICO DE FORMULARIO E INTERFAZ VISUAL
-// Descripción: Limpia los emojis/paréntesis del selector de hojas para inyectar 
-// el nombre en el enlace superior, actualiza su href correspondiente y vacía 
-// el contenedor para dibujar los inputs exactos definidos en la Sección 2.
+// Descripción: Dibuja las etiquetas de entrada y limpia el selector visual.
 // =========================================================================
 function inicializarFormulario() {
     const selector = document.getElementById("selectorHoja");
     const hoja = selector.value;
     const contenedor = document.getElementById("contenedorCampos");
+    
+    if (!contenedor) return;
     contenedor.innerHTML = "";
     cancelarEdicion();
 
-    // Obtener el texto visible del selector (Ej: "👥 Superintendentes (Horizontal)")
     const textoCompleto = selector.options[selector.selectedIndex].text;
-
-    // LIMPIEZA EXCLUSIVA: Extrae solo el nombre sin emojis ni texto en paréntesis
     const textoLimpio = textoCompleto
         .replace(/[\u2000-\u3300\ud83c-\udfff\ud83d-\udfff\ud83e-\udfff]/g, '')
-        .replace(/\s*.*?\s*/g, '')
+        .replace(/\s*\(.*?\)\s*/g, '')
         .trim();
 
     const enlaceElemento = document.getElementById("nombreHojaActiva");
-
-    // Inyectar ÚNICAMENTE el nombre limpio dentro de la etiqueta <a>
     if (enlaceElemento) {
         enlaceElemento.innerText = textoLimpio;
         enlaceElemento.href = enlacesExternos[hoja] || "#";
 
-        // Cambiar dinámicamente los estilos visuales si tiene o no enlace configurado
-        if (!enlacesExternos[hoja] || enlacesExternos[hoja] === "#") {
+        if (enlacesExternos[hoja] === "#" || !enlacesExternos[hoja]) {
             enlaceElemento.style.textDecoration = "none";
             enlaceElemento.style.color = "#333333";
             enlaceElemento.style.cursor = "default";
@@ -97,11 +85,9 @@ function inicializarFormulario() {
         }
     }
 
-    // Inyección automatizada de los inputs: En el caso de "Seguridad" inyectará exclusivamente 1 input
     if (estructuras[hoja] && estructuras[hoja].campos) {
         estructuras[hoja].campos.forEach(campo => {
             const div = document.createElement("div");
-            div.className = "form-group-dinamico";
             div.innerHTML = `<label>${campo}</label><input type="text" name="${campo}" required>`;
             contenedor.appendChild(div);
         });
@@ -109,56 +95,39 @@ function inicializarFormulario() {
 }
 
 // =========================================================================
-// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (CORREGIDO)
-// Descripción: Realiza la consulta a la base de datos de Google Sheets mediante
-// la inyección de script nativa de tu primera versión. Separa dinámicamente
-// las vistas horizontales y verticales y elimina los encabezados repetidos.
+// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (MODIFICADO)
+// Descripción: Se conecta por script JSONP (Garantiza conexión estable). 
+// Modificación A: Oculta los encabezados duplicados en las hojas horizontales.
+// Modificación B: Separa orientaciones, adaptando las verticales de forma horizontal.
 // =========================================================================
 function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
-    const contenedorTabla = document.getElementById("tablaDatos")?.parentElement;
 
     if (!tablaCabecera || !tablaCuerpo) return;
 
-    // 🛡️ REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD:
-    if (hoja === "Seguridad") {
-        if (contenedorTabla) contenedorTabla.style.display = "none";
+    // Pausa preventiva de Seguridad
+    if (hoja === "Security" || hoja === "Seguridad") {
         tablaCabecera.innerHTML = "";
-        tablaCuerpo.innerHTML = "";
-        console.log("🛡️ [Control A1] Tabla inferior de control apagada. Forzando actualización atómica.");
-        
-        // Petición silenciosa usando el callback nativo que tu servidor exige
-        const urlSeguraA1 = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
-        inyectarScriptRed(urlSeguraA1);
+        tablaCuerpo.innerHTML = "<tr><td>Sección en pausa temporal según estrategia.</td></tr>";
         return;
     }
 
-    // Comportamiento normal para las hojas de la 1 a la 8
-    if (contenedorTabla) contenedorTabla.style.display = "block";
     tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
     const urlSeguraGeneral = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
-    inyectarScriptRed(urlSeguraGeneral);
-}
-
-function inyectarScriptRed(url) {
+    
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
     const scriptPuente = document.createElement("script");
     scriptPuente.id = "puente-jsonp-google";
-    scriptPuente.src = url;
-    scriptPuente.onerror = function() {
-        const tablaCabecera = document.getElementById("tablaCabecera");
-        if (tablaCabecera) tablaCabecera.innerHTML = "<tr><th>Error crítico de conexión con el servidor.</th></tr>";
-    };
+    scriptPuente.src = urlSeguraGeneral;
     document.body.appendChild(scriptPuente);
 }
 
-// 🌟 CALLBACK ORIGINAL DE TU PRIMERA VERSIÓN CON DETECCIÓN HORIZONTAL/VERTICAL
 window.recibirDatosDesdeGoogle = function(json) {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
@@ -169,21 +138,6 @@ window.recibirDatosDesdeGoogle = function(json) {
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
-    // 1. Manejo exclusivo de la hoja Seguridad (Precarga el input único sin pintar tabla abajo)
-    if (hoja === "Seguridad") {
-        if (json && json.status === "success" && json.data && json.data.length > 0) {
-            const fila1 = json.data[0] || json.data;
-            const valorRealA1 = fila1["Fecha / Estado"] || Object.values(fila1)[0] || "";
-            const inputA1 = document.querySelector("#contenedorCampos input");
-            if (inputA1) {
-                inputA1.value = String(valorRealA1).trim();
-                document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
-            }
-        }
-        return;
-    }
-
-    // 2. Dibujar la cabecera dinámica con los nombres de tus campos para las hojas 1 a 8
     let htmlCabecera = "<tr>";
     estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
     htmlCabecera += "<th>Acciones</th></tr>";
@@ -191,19 +145,16 @@ window.recibirDatosDesdeGoogle = function(json) {
 
     if (json && json.status === "success" && json.data && json.data.length > 0) {
         
-        // 🌟 CORRECCIÓN SOLICITADA: PRESENTACIÓN HOJAS VERTICALES (Hojas 3 a la 8)
-        // Toma la columna vertical de Sheets y la acopla en una sola línea horizontal limpia
+        // MODIFICACIÓN DE HOJAS VERTICALES: Transpone los datos de columna a fila
         if (estructuras[hoja].tipo === "vertical") {
             let htmlFila = "<tr>";
-            
             estructuras[hoja].campos.forEach((campo, i) => {
                 let celdaDato = json.data[i];
                 let valorReal = "";
-                
                 if (celdaDato) {
                     let valoresInternos = Object.values(celdaDato);
-                    valorReal = (valoresInternos[1] !== undefined) ? valoresInternos[1] : valoresInternos[0];
-                    if (String(valorReal).trim() === campo) valorReal = valoresInternos[1] || "";
+                    valorReal = valoresInternos[1] !== undefined ? valoresInternos[1] : valoresInternos[0];
+                    if (String(valorReal).trim() === campo) valorReal = valoresInternos[0] || "";
                 }
                 htmlFila += `<td>${String(valorReal).trim()}</td>`;
             });
@@ -215,9 +166,8 @@ window.recibirDatosDesdeGoogle = function(json) {
             tablaCuerpo.innerHTML = htmlFila;
 
         } else {
-            // 🌟 CORRECCIÓN SOLICITADA: PRESENTACIÓN HOJAS HORIZONTALES (Hojas 1 y 2)
+            // MODIFICACIÓN DE HOJAS HORIZONTALES: Oculta la fila de encabezados repetidos
             json.data.forEach((row, index) => {
-                // LIMPIEZA DE ENCABEZADOS: Si el renglón repite los títulos, no lo pinta en la tabla
                 let valoresFila = Object.values(row).map(v => String(v).toLowerCase().trim());
                 if (valoresFila.includes("grupo") || valoresFila.includes("superintendente") || valoresFila.includes("día") || valoresFila.includes("nombre")) {
                     return; 
@@ -240,33 +190,20 @@ window.recibirDatosDesdeGoogle = function(json) {
         tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
     }
 };
-
 // =========================================================================
-// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO (HOJAS 1 A 8)
-// Descripción: Captura el submit del formulario Datos para las secciones regulares.
-// Mapea los campos dinámicos mediante el ciclo .forEach nativo de tu respaldo
-// y transmite vía POST con un retraso síncrono controlado para asegurar la escritura.
+// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO
+// Descripción: Método original de tu respaldo de fábrica intacto. Mapea los
+// campos dinámicos mediante el ciclo .forEach nativo y realiza el envío POST.
 // =========================================================================
 async function guardarRegistro(e) {
     e.preventDefault();
     const hoja = document.getElementById("selectorHoja").value;
     const formData = new FormData(e.target);
     const datos = {};
-    let payload = {};
 
-    // 🛑 SECCIÓN SEGURIDAD PAUSADA MÓMENTANEAMENTE
-    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
-        console.log("Pestaña de Seguridad en pausa temporal según estrategia de desarrollo.");
-        alert("Esta sección está temporalmente en mantenimiento. Por favor, selecciona otra hoja.");
-        return;
-    }
-
-    // =========================================================================
-    // TU LÓGICA DE RECOLECCIÓN ORIGINAL INTACTA PARA LAS HOJAS DE LA 1 A LA 8
-    // =========================================================================
     estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
 
-    payload = {
+    const payload = {
         action: registroEditandoIndex !== null ? "update" : "create",
         hoja: hoja,
         tipoEstructura: estructuras[hoja].tipo,
@@ -274,55 +211,29 @@ async function guardarRegistro(e) {
         datos: datos
     };
 
-    const btnGuardar = document.getElementById("btnGuardar");
-    if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
+    document.getElementById("btnGuardar").innerText = "Procesando...";
 
     try {
-        // Transmisión directa optimizada en modo no-cors para saltar bloqueos en GitHub Pages
-        await fetch(WEB_APP_URL, { 
-            method: "POST", 
-            mode: "no-cors",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload) 
-        });
+        await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
     } catch (err) {
-        console.error("Error en el envío: ", err);
+        alert("Error al guardar.");
     }
 
-    // 🌟 REFRESCO SÍNCRONO CONTROLADO
-    // Le otorgamos 2 segundos completos a Google Sheets para que asimile e inserte 
-    // el registro de forma física en su celda antes de mandar a limpiar y repintar la tabla.
-    setTimeout(function() {
-        if (btnGuardar) btnGuardar.innerText = "💾 Guardar Registro";
-        
-        // Limpiamos el formulario de la pantalla
-        e.target.reset();
-        
-        // Forzamos el refresco síncrono para jalar los nuevos datos consolidados de la nube
-        inicializarFormulario();
-        cargarDatos();
-        
-        console.log("🔄 [Sincronización Completada] Módulo actualizado con el nuevo registro de la nube.");
-    }, 2000); 
+    document.getElementById("btnGuardar").innerText = "💾 Guardar Registro";
+    e.target.reset();
+    inicializarFormulario();
+    cargarDatos();
 }
 
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
-// Descripción: Administra la carga de datos en los campos superiores para su 
-// edición mediante un motor tolerante a la estructura del objeto devuelto por 
-// el servidor. También gestiona las peticiones de borrado y la cancelación del estado.
+// Descripción: Controla los botones de editar, borrar y limpiar formulario.
+// Carga los datos de las filas en los inputs superiores para su modificación.
 // =========================================================================
 window.editarRegistro = (index, rowData) => {
     registroEditandoIndex = index;
-    
-    if (document.getElementById("formTitulo")) {
-        document.getElementById("formTitulo").innerText = "Editar Registro";
-    }
-    
-    const btnCancelar = document.getElementById("btnCancelar");
-    if (btnCancelar) btnCancelar.style.display = "inline-block";
+    document.getElementById("formTitulo").innerText = "Editar Registro";
+    document.getElementById("btnCancelar").style.display = "inline-block";
 
     const campos = document.querySelectorAll("#contenedorCampos input");
     campos.forEach((input, i) => {
@@ -335,22 +246,48 @@ window.borrarRegistro = async (index) => {
     if (!confirm("¿Seguro que deseas eliminar este registro?")) return;
     const hoja = document.getElementById("selectorHoja").value;
 
-    const parametrosBorrar = `action=delete&hoja=${encodeURIComponent(hoja)}&tipoEstructura=${estructuras[hoja].tipo}&index=${index}`;
-    const urlBorrar = `${WEB_APP_URL}?${parametrosBorrar}&callback=cargarDatos`;
-    
-    const scriptBorrar = document.createElement("script");
-    scriptBorrar.src = urlBorrar;
-    document.body.appendChild(scriptBorrar);
+    const payload = {
+        action: "delete",
+        hoja: hoja,
+        tipoEstructura: estructuras[hoja].tipo,
+        index: index
+    };
+
+    await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(payload) });
+    cargarDatos();
 };
 
 function cancelarEdicion() {
     registroEditandoIndex = null;
-    if (document.getElementById("formTitulo")) {
-        document.getElementById("formTitulo").innerText = "Añadir Registro";
-    }
-    if (document.getElementById("btnCancelar")) {
-        document.getElementById("btnCancelar").style.display = "none";
-    }
+    document.getElementById("formTitulo").innerText = "Añadir Registro";
+    document.getElementById("btnCancelar").style.display = "none";
     const form = document.getElementById("formularioDatos");
     if (form) form.reset();
+}
+
+// =========================================================================
+// SECCIÓN 8: MAQUINARIA INTERACTIVA DE INSTALACIÓN PWA Y SERVICE WORKER
+// Descripción: Gestiona los eventos de la instalación nativa como PWA y 
+// da de alta el sw.js para el soporte de caché de tu respaldo de fábrica.
+// =========================================================================
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('btnInstalar').style.display = 'block';
+});
+
+document.getElementById('btnInstalar').addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            document.getElementById('btnInstalar').style.display = 'none';
+        }
+        deferredPrompt = null;
+    }
+});
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
 }
