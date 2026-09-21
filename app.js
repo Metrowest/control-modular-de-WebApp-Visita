@@ -187,10 +187,12 @@ async function cargarDatos() {
         } else {
             tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
         }
-    } catch (e) {
+} catch (e) {
         console.error("Error de carga asíncrona: ", e);
-        tablaC
-        
+        if (tablaCabecera) tablaCabecera.innerHTML = "<tr><th>Error de conexión con el servidor.</th></tr>";
+    }
+}
+
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON AISLAMIENTO DE CELDA
 // Descripción: Captura los datos del formulario mediante FormData. Si la hoja 
