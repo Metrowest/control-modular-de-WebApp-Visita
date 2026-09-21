@@ -244,64 +244,65 @@ window.recibirDatosDesdeGoogle = function(json) {
 };
 
 // =========================================================================
-// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON AISLAMIENTO DE CELDA
+// SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON COMPATIBILIDAD FORM-POST
 // Descripción: Captura los datos del formulario mediante FormData. Si la hoja 
-// activa es "Seguridad", realiza un bypass deteniendo el mapeo masivo y genera 
-// un payload enfocado en la línea 1. Envía los datos mediante fetch POST nativo
-// usando modo 'no-cors' para saltar las restricciones de la directiva CSP de Google.
+// activa es "Seguridad", realiza un bypass aislando el campo de la línea 1.
+// Transmite el paquete serializándolo como URLSearchParams vía fetch POST nativo
+// usando modo 'no-cors' para evadir las restricciones de la directiva CSP de Google.
 // =========================================================================
 async function guardarRegistro(e) {
     e.preventDefault();
     const hoja = document.getElementById("selectorHoja").value;
     const formData = new FormData(e.target);
     const datos = {};
-    let payload = {};
+    
+    const accionReal = (hoja === "Seguridad" || registroEditandoIndex !== null) ? "update" : "create";
+    const indiceFila = (hoja === "Seguridad") ? 0 : registroEditandoIndex;
 
-    // 🛡️ EL BLINDAJE DE EXCLUSIÓN: Si es la hoja Seguridad, rompemos el proceso destructivo
+    // 1. RECOLECCIÓN DE VARIABLES ADAPTATIVA (PROTEGE LAS LÍNEAS DE LA 2 A LA 8)
     if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
         const valorA1 = formData.get("Fecha / Estado") || formData.get("txtGrupo") || document.getElementById("txtGrupo")?.value;
-
-        payload = {
-            action: "update",
-            hoja: "Seguridad",
-            tipoEstructura: "vertical",
-            index: 0, // Fuerza a que actúe estrictamente sobre la primera celda (A1)
-            datos: { "Fecha / Estado": valorA1 }, // Estructura limpia de un único campo para A1
-            soloCelda: true // Bandera crítica que le prohíbe al backend limpiar rangos
-        };
-        console.warn("🛡️ [Bypass Activado] Enviando payload aislado para proteger las líneas de la 2 a la 8.");
+        datos["Fecha / Estado"] = valorA1;
     } else {
-        // =========================================================================
-        // TU LÓGICA ORIGINAL INTACTA PARA TODAS LAS DEMÁS HOJAS (Superintendentes, etc.)
-        // =========================================================================
         estructuras[hoja].campos.forEach(c => datos[c] = formData.get(c));
-
-        payload = {
-            action: registroEditandoIndex !== null ? "update" : "create",
-            hoja: hoja,
-            tipoEstructura: estructuras[hoja].tipo,
-            index: registroEditandoIndex,
-            datos: datos
-        };
     }
 
-    // --- PROCESO DE TRANSMISIÓN DE FÁBRICA REPARADO CON NO-CORS ---
     const btnGuardar = document.getElementById("btnGuardar");
     if (btnGuardar) btnGuardar.innerText = "Procesando...";
 
+    // 2. FORMATEO CLÁSICO DE FORMULARIO: Codificamos el paquete de datos en formato clave=valor
+    // Esto es vital para que tu Code.gs pueda leer los parámetros de forma nativa
+    const detallesEnvio = new URLSearchParams();
+    detallesEnvio.append("action", accionReal);
+    detallesEnvio.append("hoja", hoja);
+    detallesEnvio.append("index", String(indiceFila));
+    detallesEnvio.append("tipoEstructura", estructuras[hoja].tipo);
+    detallesEnvio.append("datos", JSON.stringify(datos));
+
+    // Añadimos de forma individual cada campo en el primer nivel del payload por compatibilidad
+    Object.keys(datos).forEach(llave => {
+        detallesEnvio.append(llave, datos[llave]);
+    });
+
+    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
+        detallesEnvio.append("soloCelda", "true");
+        console.warn("🛡️ [Bypass Activado] Transmitiendo exclusivamente parámetros para la celda A1.");
+    }
+
+    // 3. ENVIÓ CON SOLICITUD OPACA COMPATIBLE CON DIRECTIVAS CSP
     try {
-        // 🚀 OBLIGATORIO: mode: "no-cors" permite que el POST viaje a Google sin que la CSP lo aborte
         await fetch(WEB_APP_URL, { 
             method: "POST", 
             mode: "no-cors",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/x-www-form-urlencoded"
             },
-            body: JSON.stringify(payload) 
+            body: detallesEnvio.toString() // Transmitimos los datos como una cadena clásica de formulario
         });
         
         alert("¡Registro procesado con éxito! Las modificaciones se han enviado a Google Sheets.");
     } catch (err) {
+        console.error("Error en la transmisión: ", err);
         alert("Error al guardar.");
     }
 
