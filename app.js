@@ -268,8 +268,8 @@ function editarRegistro(index, rowData) {
 // SECCIÓN 5: INTERCEPTOR DE GUARDADO CON TRADUCTOR DE ENTORNO UNIVERSAL (APP.JS)
 // Ubicación del bloque: CENTRO (PARTE MEDIA - FUNCIÓN 4)
 // Descripción: Empaqueta los datos del formulario antes de transmitir.
-// Incluye un escudo de aislamiento atómico para la pestaña Seguridad, evitando
-// el acople vertical masivo para prohibir de raíz el borrado de las líneas inferiores.
+// Aplica un bypass horizontal estratégico para la pestaña Seguridad, forzando
+// al servidor de Google a tratar la línea como fila independiente libre de vaciados.
 // =========================================================================
 function procesarGuardadoRegistro(evento) {
     evento.preventDefault();
@@ -294,18 +294,21 @@ function procesarGuardadoRegistro(evento) {
 
     console.log("Transmitiendo datos de forma segura hacia la pestaña de la nube: " + hoja);
 
-    const grupo = document.getElementById("txtGrupo").value.trim();
-    const superint = document.getElementById("txtSuperintendente").value.trim();
+    let grupo = document.getElementById("txtGrupo").value.trim();
+    let superint = document.getElementById("txtSuperintendente").value.trim();
     let tel = document.getElementById("txtTelefono").value.trim();
 
-    // Variable auxiliar para inyectar parámetros extra en la URL de red
-    let parametrosExtraSeguridad = "";
+    // Variable auxiliar para inyectar directivas de tipo de estructura al backend
+    let parametrosEstructuraServidor = "";
 
-    // 🛡️ EL ESCUDO PROTECTOR (ANTI-BORRADO DE LÍNEAS INFERIORES)
+    // 🛡️ EL BYPASS HORIZONTAL MAESTRO (EVITA EL BUCLE DE VACIADO DEL CODE.GS)
     if (hoja === "Seguridad") {
-        // Activamos la bandera atómica que le prohíbe al backend limpiar rangos
-        parametrosExtraSeguridad = "&soloCelda=true&tipoEstructura=vertical";
-        console.warn("🛡️ [Aislamiento de Rango] Bloqueando transmisión en cascada. Actualizando celda única.");
+        // Obligamos a la macro a tratar la línea como un registro horizontal aislado (tipo Superintendentes)
+        // Pasamos variables vacías en los campos B y C para que no altere otras columnas si existieran
+        superint = "";
+        tel = "";
+        parametrosEstructuraServidor = "&tipoEstructura=horizontal";
+        console.warn("🛡️ [Bypass Horizontal] Camuflando payload como registro horizontal para bloquear vaciado en cascada.");
     }
     // 1. ACOPLE HORIZONTAL TRADICIONAL: Si es Hospitalidad, adjuntamos la dirección
     else if (hoja === "Hospitalidad") {
@@ -329,11 +332,10 @@ function procesarGuardadoRegistro(evento) {
     const script = document.createElement("script");
     script.id = "script-guardar-hojas";
     
-    // Despachamos la URL corregida agregando de forma limpia las directivas de protección atómica de celdas
-    script.src = `${WEB_APP_URL}?accion=guardar&hoja=${encodeURIComponent(hoja)}&index=${registroEditandoIndex}&grupo=${encodeURIComponent(grupo)}&superintendente=${encodeURIComponent(superint)}&telefono=${(hoja === "Hospitalidad" || hoja.includes("Estudios") || hoja.includes("Pastoreo")) ? tel : encodeURIComponent(tel)}${parametrosExtraSeguridad}`;
+    // Despachamos la URL estructurada de forma segura camuflando la acción según corresponda
+    script.src = `${WEB_APP_URL}?accion=guardar&hoja=${encodeURIComponent(hoja)}&index=${registroEditandoIndex}&grupo=${encodeURIComponent(grupo)}&superintendente=${encodeURIComponent(superint)}&telefono=${(hoja === "Hospitalidad" || hoja.includes("Estudios") || hoja.includes("Pastoreo")) ? tel : encodeURIComponent(tel)}${parametrosEstructuraServidor}`;
     document.body.appendChild(script);
 }
-
 
 // =========================================================================
 // SECCIÓN 6: RECEPTOR UNIVERSAL DE RESPUESTAS DEL SERVIDOR (APP.JS)
