@@ -351,10 +351,6 @@ function Secc53_1_ActivarBorradoPuente(index) {
     script.src = `${WEB_APP_URL}?accion=borrar&hoja=${encodeURIComponent(hoja)}&index=${index}`;
     document.body.appendChild(script);
 }
-// =========================================================================
-// SECCIÓN 8: PUENTES DE COMPATIBILIDAD GLOBAL Y ESCUCHAS DE EVENTOS (APP.JS)
-// Ubicación del bloque: FINAL ABSOLUTO DEL ARCHIVO APP.JS
-// =========================================================================
 
 // =========================================================================
 // SECCIÓN 8: PUENTES DE COMPATIBILIDAD GLOBAL Y ESCUCHAS DE EVENTOS (APP.JS)
@@ -477,15 +473,28 @@ function actualizarEnlaceUbicacion() {
 
     if (etiquetaEnlace) {
         etiquetaEnlace.target = "_blank";
+        
+        // 🌟 TRADUCTOR DE ENTORNO VISUAL: Convierte guiones bajos del ID en espacios para leer el diccionario
+        let nombreHojaLimpio = hojaSeleccionada.replace(/_/g, " ");
+        if (nombreHojaLimpio === "Estudios Dia 1") nombreHojaLimpio = "Estudios Día 1";
+        if (nombreHojaLimpio === "Estudios Dia 2") nombreHojaLimpio = "Estudios Día 2";
+        if (nombreHojaLimpio === "Estudios Dia 3") nombreHojaLimpio = "Estudios Día 3";
+        if (nombreHojaLimpio === "Pastoreo Dia 1") nombreHojaLimpio = "Pastoreo Día 1";
+        if (nombreHojaLimpio === "Pastoreo Dia 2") nombreHojaLimpio = "Pastoreo Día 2";
+        if (nombreHojaLimpio === "Pastoreo Dia 3") nombreHojaLimpio = "Pastoreo Día 3";
+
+        // Extraemos de forma directa la dirección real mapeada en tu nueva Sección 1
+        const urlDestinoReal = ENLACES_HOJAS[nombreHojaLimpio];
+        etiquetaEnlace.href = urlDestinoReal || "#";
+
         if (hojaSeleccionada === "Hospitalidad") {
-            etiquetaEnlace.href = "https://github.io";
             etiquetaEnlace.innerHTML = "🏨 Hospitalidad";
         } else if (hojaSeleccionada === "Superintendentes") {
-            etiquetaEnlace.href = "https://github.io";
             etiquetaEnlace.innerHTML = "👥 Superintendentes";
+        } else if (hojaSeleccionada === "Seguridad") {
+            etiquetaEnlace.innerHTML = "🛡️ Seguridad";
         } else {
-            etiquetaEnlace.href = `${WEB_APP_URL}?hoja=${encodeURIComponent(hojaSeleccionada)}`;
-            etiquetaEnlace.innerHTML = `📚 ${hojaSeleccionada}`;
+            etiquetaEnlace.innerHTML = `📚 ${nombreHojaLimpio}`;
         }
     }
 
@@ -499,7 +508,7 @@ function actualizarEnlaceUbicacion() {
         if (c5) c5.style.display = "none"; if (c6) c6.style.display = "none"; if (c7) c7.style.display = "none"; if (c8) c8.style.display = "none";
 
     } else if (hojaSeleccionada.includes("Estudios")) {
-        if (tituloFormulario) tituloFormulario.innerText = `Añadir Registro (${hojaSeleccionada})`;
+        if (tituloFormulario) tituloFormulario.innerText = `Añadir Registro (${hojaSeleccionada.replace(/_/g, " ")})`;
         if (lbl1) lbl1.innerText = "Día"; if (lbl2) lbl2.innerText = "Visitante"; if (lbl3) lbl3.innerText = "Acompañante";
         if (lbl4) lbl4.innerText = "Teléfono"; if (lbl5) lbl5.innerText = "Estudiante"; if (lbl6) lbl6.innerText = "Dirección"; if (lbl7) lbl7.innerText = "Publicación"; if (lbl8) lbl8.innerText = "Detalles";
         
@@ -507,7 +516,7 @@ function actualizarEnlaceUbicacion() {
         if (c6) c6.style.display = "flex"; if (c7) c7.style.display = "flex"; if (c8) c8.style.display = "flex";
 
     } else if (hojaSeleccionada.includes("Pastoreo")) {
-        if (tituloFormulario) tituloFormulario.innerText = `Añadir Registro (${hojaSeleccionada})`;
+        if (tituloFormulario) tituloFormulario.innerText = `Añadir Registro (${hojaSeleccionada.replace(/_/g, " ")})`;
         if (lbl1) lbl1.innerText = "Día"; if (lbl2) lbl2.innerText = "Acompañante"; if (lbl3) lbl3.innerText = "Teléfono";
         if (lbl4) lbl4.innerText = "Hogar"; if (lbl5) lbl5.innerText = "Contacto"; if (lbl6) lbl6.innerText = "Dirección"; if (lbl7) lbl7.innerText = "Detalles"; if (lbl8) lbl8.innerText = "Objetivo";
         
@@ -522,6 +531,7 @@ function actualizarEnlaceUbicacion() {
         if (tituloFormulario) tituloFormulario.innerText = "Añadir Registro (Superintendentes)";
     }
 }
+
 // =========================================================================
 // SECCIÓN 9 (NUEVA): MAQUINARIA INTERACTIVA DE INSTALACIÓN PWA (APP.JS)
 // Ubicación del bloque: FINAL ABSOLUTO DEL SCRIPT CENTRAL APP.JS
