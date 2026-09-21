@@ -111,7 +111,6 @@ function inicializarFormulario() {
         });
     }
 }
-
 // =========================================================================
 // SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (CORREGIDO)
 // Descripción: Realiza la petición de datos hacia Google Sheets utilizando
@@ -132,8 +131,8 @@ function cargarDatos() {
 
     console.log("Inyectando etiqueta script de red de forma segura para la sección: " + hoja);
 
-    // Creamos la URL con el parámetro callback obligatorio exigido por Google Sheets
-    const urlSegura = `${WEB_APP_URL}?accion=leer&hoja=${encodeURIComponent(hoja)}&callback=recibirDatosServidor`;
+    // 🌟 URL configurada con el callback exacto que tu Code.gs reconoce nativamente
+    const urlSegura = `${WEB_APP_URL}?accion=leer&hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
 
     // Removemos cualquier puente de red viejo que haya quedado colgado en el DOM
     const puenteViejo = document.getElementById("puente-jsonp-google");
@@ -152,8 +151,9 @@ function cargarDatos() {
     document.body.appendChild(scriptPuente);
 }
 
-// 2. FUNCIÓN RECEPTORA CENTRAL (CALLBACK): Procesa el paquete JSON que devuelve Google
-window.recibirDatosServidor = function(json) {
+// 2. FUNCIÓN RECEPTORA CENTRAL (CALLBACK NATIVO DEL BACKEND)
+// 🌟 CORREGIDO: Renombrada exactamente a recibirDatosDesdeGoogle para desbloquear el congelamiento
+window.recibirDatosDesdeGoogle = function(json) {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
