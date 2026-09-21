@@ -430,8 +430,12 @@ function cargarDatos() {
     
     let urlConstruida = "";
 
-    // VALIDACIÓN INTERACTIVA DINÁMICA CON LOS NOMBRES EXACTOS DE LAS HOJAS
-    if (hoja === "Superintendentes" || hoja === "Hospitalidad") {
+    // 🌟 VALIDACIÓN INTERACTIVA DINÁMICA CON REGISTRO DE CANAL PARA SEGURIDAD
+    if (hoja === "Seguridad") {
+        // Generamos el puente de lectura directo hacia la macro para tu hoja de control de una columna
+        urlConstruida = `${WEB_APP_URL}?accion=leer&hoja=${encodeURIComponent(hoja)}`;
+        
+    } else if (hoja === "Superintendentes" || hoja === "Hospitalidad") {
         urlConstruida = `${WEB_APP_URL}?accion=leer&hoja=${encodeURIComponent(hoja)}`;
         
     } else if (hoja === "Estudios Día 1" || hoja === "Estudios Día 2" || hoja === "Estudios Día 3") {
