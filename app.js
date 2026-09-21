@@ -77,6 +77,9 @@ function Secc30_1_DibujarRenglonEnPantalla(indice, objetoCampos, columnasVisible
 // =========================================================================
 // SECCIÓN 3.1 (CONFIGURACIÓN DINÁMICA): DECODIFICADOR MAESTRO DE MATRICES
 // Ubicación del bloque: CENTRO (PARTE MEDIA - SECCIÓN DE CAMBIOS FRECUENTES)
+// Descripción: Clasifica y procesa de forma adaptativa las estructuras. Si es 
+// Seguridad, genera la cabecera e indexa de forma tolerante cada línea. Mantiene 
+// al 100% intacta tu lógica original de antidesfase vertical y flujos horizontales.
 // =========================================================================
 function recibirDatosDesdeGoogle(json) {
     console.log("¡Decodificador maestro activado! Clasificando datos de Google por su tipo de estructura...");
@@ -104,7 +107,11 @@ function recibirDatosDesdeGoogle(json) {
     // =========================================================================
     // CONFIGURACIÓN DE TABLAS: Mapeamos los títulos reales de tus hojas
     // =========================================================================
-    if (hojaActiva === "Superintendentes") {
+    if (hojaActiva === "Seguridad") {
+        encabezadosTextos = ["Fecha / Estado"];
+        llavesMapeo = ["grupo"]; // Mapea de forma temporal la celda al input superior txtGrupo
+        
+    } else if (hojaActiva === "Superintendentes") {
         encabezadosTextos = ["Grupo", "Superintendente", "Teléfono"];
         llavesMapeo = ["grupo", "superintendente", "telefono"];
         
@@ -128,7 +135,33 @@ function recibirDatosDesdeGoogle(json) {
     if(tablaCabecera) tablaCabecera.innerHTML = htmlCabecera;
 
     // =========================================================================
-    // ENRUTADOR DE PROCESAMIENTO VERTICAL CON EXTRACTOR ANTIDESFASE UNIFICADO
+    // 🛡️ ENRUTADOR EXCLUSIVO ADAPTATIVO PARA HOJA SEGURIDAD
+    // =========================================================================
+    if (hojaActiva === "Seguridad") {
+        datosMatriz.forEach((row, index) => {
+            // Extrae el valor de la fila de forma tolerante (por clave u objeto de matriz plano)
+            let valorReal = (typeof row === "object" && row !== null) ? (row["Fecha / Estado"] || row["grupo"] || Object.values(row)[0]) : row;
+            
+            // Ignoramos la línea si repite por accidente el nombre de la cabecera
+            if (String(valorReal).trim() === "Fecha / Estado") return;
+
+            let htmlFila = "<tr>";
+            htmlFila += `<td>${String(valorReal || "").trim()}</td>`;
+            
+            // Creamos un objeto limpio compatible con tu actualizador para inyectar en los inputs superiores
+            let objetoFila = { grupo: String(valorReal || "").trim() };
+            
+            htmlFila += `<td>
+                <button type="button" class="btn-edit" style="cursor:pointer;" onclick="window.editarRegistro(${index}, ${JSON.stringify(objetoFila).replace(/"/g, '&quot;')})">✏️</button>
+            </td></tr>`;
+            
+            if(tablaCuerpo) tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
+        });
+        return; // Finaliza el flujo de Seguridad con blindaje absoluto
+    }
+
+    // =========================================================================
+    // ENRUTADOR DE PROCESAMIENTO VERTICAL CON EXTRACTOR ANTIDESFASE UNIFICADO (INTACTO)
     // =========================================================================
     if (hojaActiva.includes("Estudios") || hojaActiva.includes("Pastoreo")) {
         
