@@ -107,15 +107,14 @@ function inicializarFormulario() {
         });
     }
 }
-
 // =========================================================================
 // SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (REPARADO)
 // Descripción: Realiza la consulta asíncrona a la base de datos de Google Sheets.
 // Si la sección activa es Seguridad, aplica un blindaje visual ocultando la tabla
 // inferior para forzar el uso del input único. Mantiene la estructura de parámetros 
-// nativa del respaldo original para evitar fallos de conexión (MIME/CORS).
+// nativa del respaldo original utilizando inyección de script (JSONP) para saltar CORS.
 // =========================================================================
-async function cargarDatos() {
+function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
@@ -131,25 +130,10 @@ async function cargarDatos() {
         tablaCuerpo.innerHTML = "";
         console.log("🛡️ [Control A1] Tabla inferior de control apagada. Forzando actualización atómica.");
         
-        try {
-            // Consulta síncrona usando la estructura de URL limpia original de tu respaldo
-            const res = await fetch(`${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}`);
-            const json = await res.json();
-            
-            if (json && json.status === "success" && json.data && json.data.length > 0) {
-                // Al ser vertical persistente, capturamos el valor guardado en la celda A1 (Línea 1)
-                const fila1 = json.data[0];
-                const valorRealA1 = fila1["Fecha / Estado"] || Object.values(fila1)[0] || "";
-                
-                const inputA1 = document.querySelector("#contenedorCampos input");
-                if (inputA1) {
-                    inputA1.value = valorRealA1;
-                    document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
-                }
-            }
-        } catch (err) {
-            console.error("Error al precargar celda A1 de Seguridad: ", err);
-        }
+        // Generamos la URL nativa tolerante con el callback exacto exigido por tu backend
+        const urlSeguraA1 = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirCeldaA1Seguridad`;
+        
+        inyectarScriptRed(urlSeguraA1);
         return;
     }
 
@@ -158,40 +142,82 @@ async function cargarDatos() {
     tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
-    try {
-        // Estructura de URL exacta de tu primer respaldo estable (Evita el error text/html MIME)
-        const res = await fetch(`${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}`);
-        const json = await res.json();
-
-        let htmlCabecera = "<tr>";
-        estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
-        htmlCabecera += "<th>Acciones</th></tr>";
-        tablaCabecera.innerHTML = htmlCabecera;
-
-        if (json.status === "success" && json.data && json.data.length > 0) {
-            json.data.forEach((row, index) => {
-                let htmlFila = "<tr>";
-                
-                // Mapeo seguro y tolerante por nombre o posición de columna
-                estructuras[hoja].campos.forEach((campo, i) => {
-                    let valorCelda = row[campo] || row[i] || Object.values(row)[i] || "";
-                    htmlFila += `<td>${valorCelda}</td>`;
-                });
-
-                htmlFila += `<td>
-                    <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
-                    <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
-                </td></tr>`;
-                tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
-            });
-        } else {
-            tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
-        }
-} catch (e) {
-        console.error("Error de carga asíncrona: ", e);
-        if (tablaCabecera) tablaCabecera.innerHTML = "<tr><th>Error de conexión con el servidor.</th></tr>";
-    }
+    // Construcción de URL limpia original con puente síncronizado para evitar bloqueos CORS
+    const urlSeguraGeneral = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
+    
+    inyectarScriptRed(urlSeguraGeneral);
 }
+
+// Función auxiliar del motor: Realiza la inyección limpia del script de red en el documento
+function inyectarScriptRed(url) {
+    const puenteViejo = document.getElementById("puente-jsonp-google");
+    if (puenteViejo) puenteViejo.remove();
+
+    const scriptPuente = document.createElement("script");
+    scriptPuente.id = "puente-jsonp-google";
+    scriptPuente.src = url;
+    scriptPuente.onerror = function() {
+        const tablaCabecera = document.getElementById("tablaCabecera");
+        if (tablaCabecera) tablaCabecera.innerHTML = "<tr><th>Error crítico de conexión con el servidor.</th></tr>";
+    };
+    document.body.appendChild(scriptPuente);
+}
+
+// 🌟 CALLBACK NATIVO EXIGIDO POR TU BACKEND (Google Sheets)
+window.recibirDatosDesdeGoogle = function(json) {
+    const hoja = document.getElementById("selectorHoja").value;
+    const tablaCabecera = document.getElementById("tablaCabecera");
+    const tablaCuerpo = document.getElementById("tablaCuerpo");
+
+    if (!tablaCabecera || !tablaCuerpo) return;
+
+    // Limpieza del nodo de red utilizado
+    const puenteViejo = document.getElementById("puente-jsonp-google");
+    if (puenteViejo) puenteViejo.remove();
+
+    let htmlCabecera = "<tr>";
+    estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
+    htmlCabecera += "<th>Acciones</th></tr>";
+    tablaCabecera.innerHTML = htmlCabecera;
+
+    if (json && json.status === "success" && json.data && json.data.length > 0) {
+        json.data.forEach((row, index) => {
+            let htmlFila = "<tr>";
+            
+            // Mapeo seguro y posicional por si los nombres varían en mayúsculas o acentos
+            estructuras[hoja].campos.forEach((campo, i) => {
+                let valorCelda = row[campo] || row[i] || Object.values(row)[i] || "";
+                htmlFila += `<td>${valorCelda}</td>`;
+            });
+
+            htmlFila += `<td>
+                <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
+                <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
+            </td></tr>`;
+            tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
+        });
+    } else {
+        tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
+    }
+};
+
+// 🌟 CALLBACK DE PRECARGA ASIGNADO PARA HOJA SEGURIDAD (Celda A1)
+window.recibirCeldaA1Seguridad = function(json) {
+    const puenteViejo = document.getElementById("puente-jsonp-google");
+    if (puenteViejo) puenteViejo.remove();
+
+    if (json && json.status === "success" && json.data && json.data.length > 0) {
+        // Obtenemos la primera fila de datos remotos de la hoja Seguridad
+        const fila1 = json.data[0] || json.data;
+        const valorRealA1 = fila1["Fecha / Estado"] || Object.values(fila1)[0] || "";
+        
+        const inputA1 = document.querySelector("#contenedorCampos input");
+        if (inputA1) {
+            inputA1.value = valorRealA1;
+            document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
+        }
+    }
+};
 
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON AISLAMIENTO DE CELDA
