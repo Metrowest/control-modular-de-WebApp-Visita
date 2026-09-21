@@ -323,6 +323,7 @@ window.recibirRespuestaServidor = window.confirmarGuardadoExitoso = window.recib
     }
 };
 
+
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
 // Descripción: Administra la carga de datos en los campos superiores para su 
