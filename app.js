@@ -109,13 +109,12 @@ function inicializarFormulario() {
 }
 
 // =========================================================================
-// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS
-// Descripción: Realiza la consulta asíncrona a la base de datos de Google Sheets.
-// Si la sección activa es Seguridad, aplica un blindaje visual ocultando la tabla
-// inferior. Adapta dinámicamente la tabla según la hoja sea horizontal o vertical,
-// eliminando la repetición de encabezados y formateando los datos de forma limpia.
+// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (CORREGIDO)
+// Descripción: Realiza la consulta a la base de datos de Google Sheets mediante
+// la inyección de script nativa de tu primera versión. Separa dinámicamente
+// las vistas horizontales y verticales y elimina los encabezados repetidos.
 // =========================================================================
-async function cargarDatos() {
+function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
@@ -124,104 +123,124 @@ async function cargarDatos() {
     if (!tablaCabecera || !tablaCuerpo) return;
 
     // 🛡️ REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD:
-    // Ocultamos mecánicamente la grilla completa para que no se listen las 67 líneas inferiores
     if (hoja === "Seguridad") {
         if (contenedorTabla) contenedorTabla.style.display = "none";
         tablaCabecera.innerHTML = "";
         tablaCuerpo.innerHTML = "";
         console.log("🛡️ [Control A1] Tabla inferior de control apagada. Forzando actualización atómica.");
         
-        try {
-            const res = await fetch(`${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}`);
-            const json = await res.json();
-            
-            if (json && json.status === "success" && json.data && json.data.length > 0) {
-                // Al ser vertical persistente, capturamos el valor guardado en la celda A1 (Línea 1)
-                const fila1 = json.data[0];
-                const valorRealA1 = fila1["Fecha / Estado"] || Object.values(fila1)[0] || "";
-                
-                const inputA1 = document.querySelector("#contenedorCampos input");
-                if (inputA1) {
-                    inputA1.value = valorRealA1;
-                    document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
-                }
-            }
-        } catch (err) {
-            console.error("Error al precargar celda A1 de Seguridad: ", err);
-        }
+        // Petición silenciosa usando el callback nativo que tu servidor exige
+        const urlSeguraA1 = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
+        inyectarScriptRed(urlSeguraA1);
         return;
     }
 
-    // COMPORTAMIENTO ORIGINAL DE TU RESPALDO PARA LAS HOJAS DE LA 1 A LA 8
+    // Comportamiento normal para las hojas de la 1 a la 8
     if (contenedorTabla) contenedorTabla.style.display = "block";
     tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
-    try {
-        const res = await fetch(`${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}`);
-        const json = await res.json();
+    const urlSeguraGeneral = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
+    inyectarScriptRed(urlSeguraGeneral);
+}
 
-        // 1. Dibujar la cabecera dinámica con los nombres de tus campos
-        let htmlCabecera = "<tr>";
-        estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
-        htmlCabecera += "<th>Acciones</th></tr>";
-        tablaCabecera.innerHTML = htmlCabecera;
+function inyectarScriptRed(url) {
+    const puenteViejo = document.getElementById("puente-jsonp-google");
+    if (puenteViejo) puenteViejo.remove();
 
-        if (json.status === "success" && json.data && json.data.length > 0) {
+    const scriptPuente = document.createElement("script");
+    scriptPuente.id = "puente-jsonp-google";
+    scriptPuente.src = url;
+    scriptPuente.onerror = function() {
+        const tablaCabecera = document.getElementById("tablaCabecera");
+        if (tablaCabecera) tablaCabecera.innerHTML = "<tr><th>Error crítico de conexión con el servidor.</th></tr>";
+    };
+    document.body.appendChild(scriptPuente);
+}
+
+// 🌟 CALLBACK ORIGINAL DE TU PRIMERA VERSIÓN CON DETECCIÓN HORIZONTAL/VERTICAL
+window.recibirDatosDesdeGoogle = function(json) {
+    const hoja = document.getElementById("selectorHoja").value;
+    const tablaCabecera = document.getElementById("tablaCabecera");
+    const tablaCuerpo = document.getElementById("tablaCuerpo");
+
+    if (!tablaCabecera || !tablaCuerpo) return;
+
+    const puenteViejo = document.getElementById("puente-jsonp-google");
+    if (puenteViejo) puenteViejo.remove();
+
+    // 1. Manejo exclusivo de la hoja Seguridad (Precarga el input único sin pintar tabla abajo)
+    if (hoja === "Seguridad") {
+        if (json && json.status === "success" && json.data && json.data.length > 0) {
+            const fila1 = json.data[0] || json.data;
+            const valorRealA1 = fila1["Fecha / Estado"] || Object.values(fila1)[0] || "";
+            const inputA1 = document.querySelector("#contenedorCampos input");
+            if (inputA1) {
+                inputA1.value = String(valorRealA1).trim();
+                document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
+            }
+        }
+        return;
+    }
+
+    // 2. Dibujar la cabecera dinámica con los nombres de tus campos para las hojas 1 a 8
+    let htmlCabecera = "<tr>";
+    estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
+    htmlCabecera += "<th>Acciones</th></tr>";
+    tablaCabecera.innerHTML = htmlCabecera;
+
+    if (json && json.status === "success" && json.data && json.data.length > 0) {
+        
+        // 🌟 CORRECCIÓN SOLICITADA: PRESENTACIÓN HOJAS VERTICALES (Hojas 3 a la 8)
+        // Toma la columna vertical de Sheets y la acopla en una sola línea horizontal limpia
+        if (estructuras[hoja].tipo === "vertical") {
+            let htmlFila = "<tr>";
             
-            // 🌟 CONDICIONAL A: PROCESAMIENTO VERTICAL (Hojas 3 a la 8)
-            // Convierte la estructura de columna de Sheets en una fila horizontal limpia en pantalla
-            if (estructuras[hoja].tipo === "vertical") {
-                let htmlFila = "<tr>";
+            estructuras[hoja].campos.forEach((campo, i) => {
+                let celdaDato = json.data[i];
+                let valorReal = "";
                 
+                if (celdaDato) {
+                    let valoresInternos = Object.values(celdaDato);
+                    valorReal = (valoresInternos[1] !== undefined) ? valoresInternos[1] : valoresInternos[0];
+                    if (String(valorReal).trim() === campo) valorReal = valoresInternos[1] || "";
+                }
+                htmlFila += `<td>${String(valorReal).trim()}</td>`;
+            });
+
+            htmlFila += `<td>
+                <button type="button" class="btn-edit" onclick="editarRegistro(0, ${JSON.stringify(json.data).replace(/"/g, '&quot;')})">✏️</button>
+                <button type="button" class="btn-delete" onclick="borrarRegistro(0)">🗑️</button>
+            </td></tr>`;
+            tablaCuerpo.innerHTML = htmlFila;
+
+        } else {
+            // 🌟 CORRECCIÓN SOLICITADA: PRESENTACIÓN HOJAS HORIZONTALES (Hojas 1 y 2)
+            json.data.forEach((row, index) => {
+                // LIMPIEZA DE ENCABEZADOS: Si el renglón repite los títulos, no lo pinta en la tabla
+                let valoresFila = Object.values(row).map(v => String(v).toLowerCase().trim());
+                if (valoresFila.includes("grupo") || valoresFila.includes("superintendente") || valoresFila.includes("día") || valoresFila.includes("nombre")) {
+                    return; 
+                }
+
+                let htmlFila = "<tr>";
                 estructuras[hoja].campos.forEach((campo, i) => {
-                    let celdaDato = json.data[i];
-                    let valorReal = "";
-                    
-                    if (celdaDato) {
-                        let valoresInternos = Object.values(celdaDato);
-                        valorReal = valoresInternos[1] !== undefined ? valoresInternos[1] : valoresInternos[0];
-                        if (String(valorReal).trim() === campo) valorReal = valoresInternos[0] || "";
-                    }
-                    htmlFila += `<td>${String(valorReal).trim()}</td>`;
+                    let valorCelda = row[campo] || row[i] || Object.values(row)[i] || "";
+                    htmlFila += `<td>${valorCelda}</td>`;
                 });
 
                 htmlFila += `<td>
-                    <button type="button" class="btn-edit" onclick="editarRegistro(0, ${JSON.stringify(json.data).replace(/"/g, '&quot;')})">✏️</button>
-                    <button type="button" class="btn-delete" onclick="borrarRegistro(0)">🗑️</button>
+                    <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
+                    <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
                 </td></tr>`;
-                tablaCuerpo.innerHTML = htmlFila;
-
-            } else {
-                // 🌟 CONDICIONAL B: PROCESAMIENTO HORIZONTAL (Hojas 1 y 2)
-                json.data.forEach((row, index) => {
-                    // IGNORAR FILA DE ENCABEZADOS: Evita duplicar los títulos de las columnas en la grilla
-                    let valoresFila = Object.values(row).map(v => String(v).toLowerCase().trim());
-                    if (valoresFila.includes("grupo") || valoresFila.includes("superintendente") || valoresFila.includes("día") || valoresFila.includes("nombre")) {
-                        return; 
-                    }
-
-                    let htmlFila = "<tr>";
-                    estructuras[hoja].campos.forEach((campo, i) => {
-                        let valorCelda = row[campo] || row[i] || Object.values(row)[i] || "";
-                        htmlFila += `<td>${valorCelda}</td>`;
-                    });
-
-                    htmlFila += `<td>
-                        <button type="button" class="btn-edit" onclick="editarRegistro(${index}, ${JSON.stringify(row).replace(/"/g, '&quot;')})">✏️</button>
-                        <button type="button" class="btn-delete" onclick="borrarRegistro(${index})">🗑️</button>
-                    </td></tr>`;
-                    tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
-                });
-            }
-        } else {
-            tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
+                tablaCuerpo.insertAdjacentHTML("beforeend", htmlFila);
+            });
         }
-    } catch (e) {
-        console.error("Error de carga asíncrona: ", e);
-        tablaCabecera.innerHTML = "<tr><th>Error de conexión con el servidor.</th></tr>";
+    } else {
+        tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
     }
-}
+};
+
 
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO
