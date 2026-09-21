@@ -241,7 +241,6 @@ window.recibirCeldaA1Seguridad = function(json) {
         }
     }
 };
-
 // =========================================================================
 // SECCIÓN 6: PROCESAMIENTO Y TRANSMISIÓN DE GUARDADO CON ESCUDO ANTI-CORS
 // Descripción: Captura el envío. Si es Seguridad, aísla la variable para A1.
@@ -269,8 +268,8 @@ function guardarRegistro(e) {
     const btnGuardar = document.getElementById("btnGuardar");
     if (btnGuardar) btnGuardar.innerText = "Procesando en la nube...";
 
-    // 🚀 OBLIGATORIO: Generamos la inyección limpia JSONP para saltar el bloqueo de seguridad CORS de Google
-    const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=confirmarGuardadoExitoso`;
+    // 🚀 OBLIGATORIO: Usamos el callback nativo del backend de Google para recibir la respuesta sin congelamientos
+    const urlGuardarJSONP = `${WEB_APP_URL}?${parametrosEnvio}&callback=recibirRespuestaServidor`;
 
     const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
     if (puenteGuardarViejo) puenteGuardarViejo.remove();
@@ -281,8 +280,9 @@ function guardarRegistro(e) {
     document.body.appendChild(scriptGuardar);
 }
 
-// CALLBACK DE CONFIRMACIÓN: Captura la respuesta de éxito directo desde tu Google Sheets
-window.confirmarGuardadoExitoso = function(respuesta) {
+// 🌟 PUENTE DE ENLACE DIRECTO (CALLBACK): Atrapa la respuesta del backend,
+// libera el botón, limpia el formulario y actualiza la tabla en vivo.
+window.recibirRespuestaServidor = window.confirmarGuardadoExitoso = function(respuesta) {
     const puenteGuardarViejo = document.getElementById("puente-jsonp-guardar");
     if (puenteGuardarViejo) puenteGuardarViejo.remove();
 
@@ -296,6 +296,7 @@ window.confirmarGuardadoExitoso = function(respuesta) {
     inicializarFormulario();
     cargarDatos();
 };
+
 
 // =========================================================================
 // SECCIÓN 7: GESTIÓN DE MODIFICACIÓN, ELIMINACIÓN Y LIMPIEZA DE ESTADO
