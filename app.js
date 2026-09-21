@@ -109,10 +109,11 @@ function inicializarFormulario() {
 }
 
 // =========================================================================
-// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (PERFECTO)
-// Descripción: Consulta asíncronamente a Google Sheets. Si la hoja es Seguridad,
-// esconde la tabla inferior de control de control de forma física. En las demás,
-// renderiza las grillas de datos adaptando dinámicamente formatos horizontales y verticales.
+// SECCIÓN 5: MOTOR DE CARGA Y LECTURA ASÍNCRONA DE DATOS REMOTOS (CORREGIDO)
+// Descripción: Realiza la consulta asíncrona a la base de datos de Google Sheets.
+// Si la sección activa es Seguridad, aplica un blindaje visual ocultando la tabla
+// inferior de forma física. Adapta dinámicamente la tabla según la hoja sea 
+// horizontal o vertical, eliminando la repetición de encabezados y formateando.
 // =========================================================================
 function cargarDatos() {
     const hoja = document.getElementById("selectorHoja").value;
@@ -122,24 +123,25 @@ function cargarDatos() {
 
     if (!tablaCabecera || !tablaCuerpo) return;
 
-    // 🛡️ REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD
-    if (hoja === "Seguridad" || hoja === "Seguridad (Programa)") {
+    // 🛡️ REGLA DE EXCLUSIÓN TOTAL PARA SEGURIDAD:
+    if (hoja === "Seguridad") {
         if (contenedorTabla) contenedorTabla.style.display = "none";
         tablaCabecera.innerHTML = "";
         tablaCuerpo.innerHTML = "";
-        console.log("🛡️ [Control A1] Ocultando tabla de 67 líneas de forma definitiva.");
+        console.log("🛡️ [Control A1] Tabla inferior de control apagada. Forzando actualización atómica.");
         
-        const urlSeguraA1 = `${WEB_APP_URL}?hoja=${encodeURIComponent("Seguridad")}&callback=recibirCeldaA1SeguridadExclusivo`;
+        // Petición silenciosa para precargar el valor actual de la celda A1 en tu input superior
+        const urlSeguraA1 = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
         inyectarScriptRed(urlSeguraA1);
         return;
     }
 
-    // Comportamiento normal de lectura para las hojas de la 1 a la 8
+    // Comportamiento normal para las hojas de la 1 a la 8
     if (contenedorTabla) contenedorTabla.style.display = "block";
     tablaCabecera.innerHTML = "<tr><th>Cargando datos desde la nube...</th></tr>";
     tablaCuerpo.innerHTML = "";
 
-    const urlSeguraGeneral = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogleExclusivo`;
+    const urlSeguraGeneral = `${WEB_APP_URL}?hoja=${encodeURIComponent(hoja)}&callback=recibirDatosDesdeGoogle`;
     inyectarScriptRed(urlSeguraGeneral);
 }
 
@@ -150,11 +152,15 @@ function inyectarScriptRed(url) {
     const scriptPuente = document.createElement("script");
     scriptPuente.id = "puente-jsonp-google";
     scriptPuente.src = url;
+    scriptPuente.onerror = function() {
+        const tablaCabecera = document.getElementById("tablaCabecera");
+        if (tablaCabecera) tablaCabecera.innerHTML = "<tr><th>Error crítico de conexión con el servidor.</th></tr>";
+    };
     document.body.appendChild(scriptPuente);
 }
 
-// CALLBACK DE LECTURA DE DATOS TOTALMENTE RENOMBRADO PARA EVITAR COLISIONES
-window.recibirDatosDesdeGoogleExclusivo = function(json) {
+// 🌟 CALLBACK NATIVO EXIGIDO POR TU SERVIDOR CON PROCESAMIENTO ADAPTATIVO
+window.recibirDatosDesdeGoogle = function(json) {
     const hoja = document.getElementById("selectorHoja").value;
     const tablaCabecera = document.getElementById("tablaCabecera");
     const tablaCuerpo = document.getElementById("tablaCuerpo");
@@ -164,6 +170,21 @@ window.recibirDatosDesdeGoogleExclusivo = function(json) {
     const puenteViejo = document.getElementById("puente-jsonp-google");
     if (puenteViejo) puenteViejo.remove();
 
+    // 1. Manejo exclusivo de la hoja Seguridad (Precarga del input único sin tabla)
+    if (hoja === "Seguridad") {
+        if (json && json.status === "success" && json.data && json.data.length > 0) {
+            const fila1 = json.data[0] || json.data;
+            const valorRealA1 = fila1["Fecha / Estado"] || Object.values(fila1)[0] || "";
+            const inputA1 = document.querySelector("#contenedorCampos input");
+            if (inputA1) {
+                inputA1.value = String(valorRealA1).trim();
+                document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
+            }
+        }
+        return;
+    }
+
+    // 2. Dibujar la cabecera dinámica con los nombres de tus campos para las hojas 1 a 8
     let htmlCabecera = "<tr>";
     estructuras[hoja].campos.forEach(c => htmlCabecera += `<th>${c}</th>`);
     htmlCabecera += "<th>Acciones</th></tr>";
@@ -171,17 +192,19 @@ window.recibirDatosDesdeGoogleExclusivo = function(json) {
 
     if (json && json.status === "success" && json.data && json.data.length > 0) {
         
-        // PROCESAMIENTO VERTICAL SEGURO (Hojas 3 a la 8)
+        // 🌟 CONDICIONAL A: PROCESAMIENTO VERTICAL (Hojas 3 a la 8)
+        // Convierte la estructura de columna de Sheets en una fila horizontal limpia en pantalla
         if (estructuras[hoja].tipo === "vertical") {
             let htmlFila = "<tr>";
             
             estructuras[hoja].campos.forEach((campo, i) => {
+                // Buscamos el registro inspeccionando la matriz devuelta
                 let celdaDato = json.data[i];
                 let valorReal = "";
                 
                 if (celdaDato) {
                     let valoresInternos = Object.values(celdaDato);
-                    valorReal = valoresInternos[1] !== undefined ? valoresInternos[1] : valoresInternos[0];
+                    valorReal = (valoresInternos[1] !== undefined) ? valoresInternos[1] : valoresInternos[0];
                     if (String(valorReal).trim() === campo) valorReal = valoresInternos[0] || "";
                 }
                 htmlFila += `<td>${String(valorReal).trim()}</td>`;
@@ -194,8 +217,9 @@ window.recibirDatosDesdeGoogleExclusivo = function(json) {
             tablaCuerpo.innerHTML = htmlFila;
 
         } else {
-            // PROCESAMIENTO HORIZONTAL SEGURO (Hojas 1 y 2)
+            // 🌟 CONDICIONAL B: PROCESAMIENTO HORIZONTAL (Hojas 1 y 2)
             json.data.forEach((row, index) => {
+                // IGNORAR FILA DE ENCABEZADOS: Evita duplicar los títulos de las columnas en la grilla
                 let valoresFila = Object.values(row).map(v => String(v).toLowerCase().trim());
                 if (valoresFila.includes("grupo") || valoresFila.includes("superintendente") || valoresFila.includes("día") || valoresFila.includes("nombre")) {
                     return; 
@@ -216,28 +240,6 @@ window.recibirDatosDesdeGoogleExclusivo = function(json) {
         }
     } else {
         tablaCuerpo.innerHTML = `<tr><td colspan="${estructuras[hoja].campos.length + 1}">No hay registros guardados en esta sección.</td></tr>`;
-    }
-};
-
-// CALLBACK DE PRECARGA REASIGNADO INDEPENDIENTE PARA SEGURIDAD (Celda A1)
-window.recibirCeldaA1SeguridadExclusivo = function(json) {
-    const puenteViejo = document.getElementById("puente-jsonp-google");
-    if (puenteViejo) puenteViejo.remove();
-
-    if (json && json.status === "success" && json.data) {
-        let fila1 = Array.isArray(json.data) ? json.data[0] : json.data;
-        let valorRealA1 = "";
-        
-        if (fila1) {
-            let valores = Object.values(fila1);
-            valorRealA1 = valores[1] !== undefined ? valores[1] : valores[0];
-        }
-        
-        const inputA1 = document.querySelector("#contenedorCampos input");
-        if (inputA1) {
-            inputA1.value = String(valorRealA1).trim();
-            document.getElementById("formTitulo").innerText = "Editar Registro (Línea 1)";
-        }
     }
 };
 
