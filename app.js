@@ -32,7 +32,6 @@ function inicializarAplicacionBase() {
   const selMes = document.getElementById("selectorMes");
 
   if (selSecc) {
-    // Recuperar la última pestaña que abrió el usuario
     const ultSecc = localStorage.getItem("ultimaSeccionGuardada");
     if (ultSecc && ENLACES_HOJAS[ultSecc]) {
         selSecc.value = ultSecc;
@@ -49,7 +48,6 @@ function inicializarAplicacionBase() {
   }
 
   if (selMes) {
-    // Recuperar el mes de la memoria del celular
     const ultMes = localStorage.getItem("ultimoMesGuardado");
     if (ultMes) selMes.value = ultMes;
 
@@ -58,7 +56,6 @@ function inicializarAplicacionBase() {
     });
   }
 }
-
 // =========================================================================
 // SECCIÓN 2: DISPARADOR AUTOMÁTICO DE LECTURA DINÁMICA (APP.JS)
 // Ubicación del bloque: CENTRO (PARTE MEDIA - FUNCIÓN 1)
