@@ -1,6 +1,8 @@
-/* =========================================================================
-   STYLE.CSS - PARTE 1: VARIABLES GLOBALES Y ESTRUCTURA EN BLOQUES LADO A LADO
-   ========================================================================= */
+/* ==========================================================
+   SECCIÓN 1: VARIABLES GLOBALES Y CONFIGURACIÓN MAESTRA
+   Descripción: Inicializa el color de fondo general de la 
+   pantalla, la tipografía base y las sombras estructurales.
+   ========================================================== */
 :root {
     --color-fondo: #f8fafc;
     --color-superficie: #ffffff;
@@ -9,8 +11,10 @@
     --color-texto-oscuro: #0f172a;
     --color-texto-medio: #475569;
     --color-borde: #e2e8f0;
-    --fuente-sistema: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --sombra-modulo: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --fuente-sistema: 'Plus Jakarta Sans', 
+        -apple-system, sans-serif;
+    --sombra-modulo: 0 4px 6px -1px 
+        rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -27,195 +31,238 @@ body {
     line-height: 1.5;
 }
 
-/* Contenedor Principal Adaptativo en Rejilla Modular Inteligente */
-.contenedor-principal {
-    max-width: 1300px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr; /* Una columna por defecto en dispositivos móviles */
+/* ==========================================================
+   SECCIÓN 2: ARQUITECTURA PARALELA (DISTRIBUCIÓN EN 2 COL.)
+   Descripción: Controla que los bloques se alineen de forma
+   simétrica en la PC y se compacten en el celular.
+   ========================================================== */
+.contenedor-modulos-paralelos {
+    display: flex;
+    flex-direction: row;
     gap: 24px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
-/* DISTRIBUCIÓN AVANZADA: Reorganiza los bloques lado a lado en pantallas grandes (Estilo Foto 2) */
-@media (min-width: 992px) {
-    .contenedor-principal {
-        grid-template-columns: repeat(2, 1fr); /* Divide la pantalla en dos columnas idénticas */
-    }
+.bloque-carpetas-izquierda-empaquetado,
+.bloque-hojas-derecha-empaquetado {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    flex: 1;
+    width: 100%;
+    min-width: 340px;
+}
 
-    /* El selector de secciones superior se extiende a todo lo ancho de la cumbre */
-    .contenedor-selector {
-        grid-column: span 2;
+/* Adaptación responsiva estricta para celulares */
+@media (max-width: 1100px) {
+    .contenedor-modulos-paralelos {
+        flex-direction: column;
+        align-items: center;
     }
-
-    /* EL GESTOR DE ARCHIVOS FLOTA ARRIBA PANORÁMICO: Se extiende completo sobre las hojas */
-    #moduloGestorCarpetas {
-        grid-column: span 2;
-    }
-
-    /* EL FORMULARIO DE AÑADIR REGISTRO SE CLAVA EN LA COLUMNA IZQUIERDA */
-    .contenedor-principal > .tarjeta-modulo:nth-of-type(2) {
-        grid-column: 1;
-        align-self: start;
-    }
-
-    /* LA TABLA DE REGISTROS ALMACENADOS SE CLAVA EN LA COLUMNA DERECHA */
-    .contenedor-principal > .tarjeta-modulo:last-child {
-        grid-column: 2;
-        align-self: start;
+    .bloque-carpetas-izquierda-empaquetado,
+    .bloque-hojas-derecha-empaquetado {
+        width: 100%;
+        min-width: 100%;
     }
 }
 
-/* El diseño de cubículos independientes (Tarjetas Modulares Limpias) */
+/* ==========================================================
+   SECCIÓN 3: COMPONENTES ESTRUCTURALES E INPUTS AMARILLOS
+   Descripción: Diseña el cascarón de las tarjetas fijas y
+   pinta los selectores de amarillo pastel de forma libre.
+   ========================================================== */
 .tarjeta-modulo {
     background-color: var(--color-superficie);
-    border-radius: 12px;
+    border-radius: 8px;
     border: 1px solid var(--color-borde);
     box-shadow: var(--sombra-modulo);
-    padding: 24px;
+    padding: 12px;
     width: 100%;
     display: block;
+    overflow: hidden;
 }
 
 .tarjeta-cabecera {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
+    padding-top: 8px;       
+    padding-bottom: 8px;    
+    padding-left: 16px;     
+    padding-right: 16px;    
     margin-bottom: 20px;
     border-bottom: 1px solid var(--color-borde);
-    padding-bottom: 12px;
 }
 
-.icono-titulo {
-    font-size: 1.4rem;
+.tarjeta-modulo .campo-formulario,
+.tarjeta-modulo .contenedor-selector,
+.tarjeta-modulo .zona-archivos-disponibles,
+.tarjeta-modulo .tabla-responsiva,
+.tarjeta-modulo form,
+.grid-formulario {
+    padding: 10px 5px;
+    box-sizing: border-box;
 }
 
-h2 {
-    font-size: 1.25rem;
-    font-weight: 700;
+/* Unificación de inputs amarillo pastel claro solicitado */
+.tarjeta-modulo select,
+.tarjeta-modulo input,
+.tarjeta-modulo select option {
+    background-color: #fffde6; 
     color: var(--color-texto-oscuro);
-}
-
-.contenedor-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-@media (min-width: 768px) {
-    .contenedor-selector {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-    }
-}
-
-.etiqueta-seleccion {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--color-texto-medio);
-}
-/* =========================================================================
-   STYLE.CSS - PARTE 2: COMPONENTES, FORMULARIOS Y RESPONSIVIDAD ESTRICTA
-   ========================================================================= */
-
-/* Selectores e Inputs estilizados */
-.selector-estilizado {
+    border: 1px solid var(--color-borde);
     width: 100%;
+    box-sizing: border-box;
     padding: 10px 14px;
     border-radius: 8px;
-    border: 1px solid var(--color-borde);
-    background-color: var(--color-superficie);
     font-family: var(--fuente-sistema);
     font-size: 0.95rem;
-    color: var(--color-texto-oscuro);
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.2s;
-}
-
-.selector-estilizado:focus {
-    border-color: var(--color-turquesa);
-}
-
-.enlace-seccion-activa {
-    font-size: 0.85rem;
-    color: var(--color-texto-medio);
-    font-weight: 500;
-}
-
-.link-moderno {
-    color: var(--color-turquesa);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.link-moderno:hover {
-    text-decoration: underline;
-}
-
-/* Grilla del Formulario interna (Campos 1, 2, 3...) */
-.grid-formulario {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 20px;
-}
-
-/* Ajuste de columnas: 2 columnas en dispositivos móviles/tabletas y 3 columnas solo en computadoras */
-@media (min-width: 480px) {
-    .grid-formulario {
-        grid-template-columns: repeat(2, 1fr); /* 2 columnas en móviles y tabletas */
-    }
-}
-@media (min-width: 1024px) {
-    .grid-formulario {
-        grid-template-columns: repeat(2, 1fr) !important; /* Fuerza solo 2 columnas de inputs */
-    }
-}
-
-.campo-formulario {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.campo-formulario label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-texto-medio);
-}
-
-.campo-formulario input[type="text"] {
-    width: 100%;
-    padding: 10px 14px;
-    border-radius: 8px;
-    border: 1px solid var(--color-borde);
-    font-size: 0.9rem;
-    color: var(--color-texto-oscuro);
-    font-family: var(--fuente-sistema);
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.campo-formulario input[type="text"]:focus {
+.tarjeta-modulo select:focus,
+.tarjeta-modulo input:focus {
     border-color: var(--color-turquesa);
     box-shadow: 0 0 0 3px rgba(44, 187, 176, 0.1);
 }
 
-/* Bloque de Botones Flexibles y Adaptativos */
+.grid-formulario {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit, 
+        minmax(220px, 1fr)
+    );
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+/* ==========================================================
+   SECCIÓN 4: IDENTIDAD CROMÁTICA - GAMA MORADO CORPORATIVO
+   Descripción: Sincroniza los módulos de la pantalla bajo
+   la misma paleta de colores de cabeceras oscuras.
+   ========================================================== */
+
+/* --- COLUMNA IZQUIERDA: COMPONENTES DRIVE --- */
+.modulo-selector-carpetas { 
+    background-color: #ffffff; 
+}
+.modulo-selector-carpetas .tarjeta-cabecera { 
+    background-color: #3f3a63; 
+    color: #ffffff; 
+}
+.modulo-selector-carpetas .campo-formulario { 
+    background-color: #f1efff; 
+    border-radius: 8px; 
+}
+
+.modulo-cargar-carpetas { 
+    background-color: #ffffff; 
+}
+.modulo-cargar-carpetas .tarjeta-cabecera { 
+    background-color: #3f3a63; 
+    color: #ffffff; 
+}
+.modulo-cargar-carpetas .campo-formulario { 
+    background-color: #f1efff; 
+    border-radius: 8px; 
+}
+.modulo-cargar-carpetas .btn-primario { 
+    background-color: #3f3a63; 
+    color: #ffffff; 
+}
+
+.modulo-yabla-carpetas { 
+    background-color: #ffffff; 
+}
+.modulo-yabla-carpetas .tarjeta-cabecera { 
+    background-color: #3f3a63; 
+    color: #ffffff; 
+}
+.modulo-yabla-carpetas .zona-archivos-disponibles { 
+    background-color: #f1efff; 
+    border-radius: 8px; 
+}
+.modulo-yabla-carpetas th { 
+    background-color: #dbd6f5; 
+    color: #000000; 
+}
+
+/* --- COLUMNA DERECHA: COMPONENTES SHEETS --- */
+.modulo-gama-verde { 
+    background-color: #ffffff; 
+}
+.modulo-gama-verde .tarjeta-cabecera { 
+    background-color: #3f3a63; 
+    color: #ffffff; 
+}
+.modulo-gama-verde .contenedor-selector { 
+    background-color: #f1efff; 
+    border-radius: 8px; 
+}
+
+.modulo-gama-violeta { 
+    background-color: #ffffff; 
+}
+.modulo-gama-violeta .tarjeta-cabecera { 
+    background-color: #3f3a63; 
+    color: #ffffff; 
+}
+.modulo-gama-violeta form { 
+    background-color: #f1efff; 
+    border-radius: 8px; 
+}
+.modulo-gama-violeta .btn-primario { 
+    background-color: #3f3a63; 
+    color: #ffffff; 
+}
+
+.modulo-gama-lavanda { 
+    background-color: #ffffff; 
+}
+.modulo-gama-lavanda .tarjeta-cabecera { 
+    background-color: #3f3a63; 
+    color: #ffffff; 
+}
+.modulo-gama-lavanda .campo-formulario,
+.modulo-gama-lavanda .tabla-responsiva { 
+    background-color: #f1efff; 
+    border-radius: 8px; 
+}
+.modulo-gama-lavanda th { 
+    background-color: #dbd6f5; 
+    color: #000000; 
+}
+/* ==========================================================
+   SECCIÓN 5: BOTONERAS, SPINNERS Y ENTORNO DE TABLAS
+   Descripción: Estiliza y centraliza la apariencia de los
+   botones con el color morado base y el diseño de tablas.
+   ========================================================== */
 .bloque-botones {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-@media (min-width: 480px) {
-    .bloque-botones {
-        flex-direction: row;
-    }
+@media (min-width: 480px) { 
+    .bloque-botones { 
+        flex-direction: row; 
+    } 
 }
 
-.btn-primario, .btn-secundario {
+/* Unificación de botones al morado corporativo */
+.btn-primario, 
+.modulo-cargar-carpetas .btn-primario, 
+.modulo-gama-violeta .btn-primario,
+.tabla-responsiva a.link-moderno,
+.tabla-responsiva .btn-ver-drive,
+[id*="btn"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -227,33 +274,32 @@ h2 {
     font-weight: 600;
     cursor: pointer;
     border: none;
-    transition: background-color 0.2s, transform 0.1s;
+    background-color: #3f3a63 !important; 
+    color: #ffffff !important;
+    transition: background-color 0.2s, 
+        transform 0.1s;
 }
 
-.btn-primario {
-    background-color: var(--color-turquesa);
-    color: #ffffff;
+.btn-primario:hover { 
+    filter: brightness(1.2) !important; 
 }
 
-.btn-primario:hover {
-    background-color: var(--color-turquesa-oscuro);
+.btn-secundario { 
+    background-color: #f1f5f9 !important; 
+    color: #ef4444 !important; 
+    border: 1px solid #fee2e2 !important; 
 }
 
-.btn-secundario {
-    background-color: #f1f5f9;
-    color: #ef4444;
-    border: 1px solid #fee2e2;
+.btn-secundario:hover { 
+    background-color: #fee2e2 !important; 
 }
 
-.btn-secundario:hover {
-    background-color: #fee2e2;
+.btn-primario:active, 
+.btn-secundario:active { 
+    transform: scale(0.98); 
 }
 
-.btn-primario:active, .btn-secundario:active {
-    transform: scale(0.98);
-}
-
-/* Blindaje de Tablas Responsivas con scroll interno */
+/* Configuración estructural de tablas */
 .tabla-responsiva {
     width: 100%;
     overflow-x: auto;
@@ -270,109 +316,62 @@ table {
     font-size: 0.85rem;
 }
 
-th, td {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--color-borde);
+th, td { 
+    padding: 12px 14px; 
+    border-bottom: 1px solid var(--color-borde); 
 }
 
-th {
-    background-color: #f8fafc;
-    color: var(--color-texto-medio);
-    font-weight: 600;
-    white-space: nowrap;
+th { 
+    background-color: #dbd6f5; 
+    color: #000000; 
+    font-weight: 600; 
+    white-space: nowrap; 
 }
 
-td {
-    color: var(--color-texto-oscuro);
+td { 
+    color: var(--color-texto-oscuro); 
 }
 
-tr:last-child td {
-    border-bottom: none;
+tr:last-child td { 
+    border-bottom: none; 
 }
 
-.celda-carga {
-    padding: 30px;
-    text-align: center;
-    color: var(--color-texto-medio);
+.celda-carga { 
+    padding: 30px; 
+    text-align: center; 
+    color: var(--color-texto-medio); 
 }
 
-/* Spinner de carga estético */
+/* Indicador de carga asíncrono */
 .spinner-carga {
     width: 24px;
     height: 24px;
     border: 3px solid #e2e8f0;
-    border-top-color: var(--color-turquesa);
+    border-top-color: #3f3a63;
     border-radius: 50%;
     margin: 0 auto 10px auto;
     animation: girarSpinner 0.8s linear infinite;
 }
 
-@keyframes girarSpinner {
-    to { transform: rotate(360deg); }
+@keyframes girarSpinner { 
+    to { transform: rotate(360deg); } 
 }
 
-/* Botones de acción originales de las celdas de Sheets */
-.btn-edit, .btn-delete {
-    background: none;
-    border: none;
-    font-size: 1.1rem;
-    padding: 4px 8px;
-    cursor: pointer;
-    transition: transform 0.1s;
+.btn-edit, 
+.btn-delete { 
+    background: none; 
+    border: none; 
+    font-size: 1.1rem; 
+    padding: 4px 8px; 
+    cursor: pointer; 
+    transition: transform 0.1s; 
 }
 
-.btn-edit:hover, .btn-delete:hover {
-    transform: scale(1.2);
+.btn-edit:hover, 
+.btn-delete:hover { 
+    transform: scale(1.2); 
 }
 
-/* =========================================================================
-   DISTRIBUCIÓN PARALELA MAESTRA INTEGRADA (MÓDULOS DE LA FOTO)
-   ========================================================================= */
-.contenedor-modulos-paralelos {
-    display: flex;
-    flex-direction: row;
-    gap: 24px;
-    align-items: flex-start;
-    justify-content: flex-start;
-    width: 100%;
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 10px;
-    box-sizing: border-box;
-}
-
-/* Columna Izquierda (Carpetas) y Columna Central (Formulario) */
-.contenedor-modulos-paralelos > .tarjeta-modulo:not(:last-child),
-.contenedor-modulos-paralelos > #moduloGestorCarpetas {
-    flex: 1;
-    min-width: 340px;
-    margin: 0 !important;
-}
-
-/* Columna Derecha Ancha (Registros Almacenados de la Hoja) */
-.contenedor-modulos-paralelos > .tarjeta-modulo:last-child {
-    flex: 2;
-    min-width: 500px;
-    margin: 0 !important;
-}
-
-/* Optimización Responsiva para Teléfonos y Tabletas Pequeñas */
-@media (max-width: 1100px) {
-    .contenedor-modulos-paralelos {
-        flex-direction: column;
-        align-items: center;
-    }
-    .contenedor-modulos-paralelos > .tarjeta-modulo {
-        width: 100% !important;
-        min-width: 100% !important;
-    }
-}
-
-/* =========================================================================
-   NUEVAS ADICIONES: ICONOS DINÁMICOS Y COMPACTACIÓN DEL BANNER PWA
-   ========================================================================= */
-
-/* Alineación e integración de Iconos Dinámicos (MÓDULO DE CARPETAS) */
 .tabla-responsiva td i, 
 .tarjeta-modulo i {
     margin-right: 8px;
@@ -380,59 +379,194 @@ tr:last-child td {
     vertical-align: middle;
 }
 
-/* Zona de amortiguación para que el formulario no sea tapado en móviles */
-@media (max-width: 768px) {
-    .grid-formulario {
-        margin-bottom: 12px;
-    }
-    .bloque-botones {
-        margin-bottom: 40px; /* Deja un espacio libre abajo para que el botón "Guardar" suba y sea accesible */
-    }
+/* ==========================================================
+   SECCIÓN 6: TABLERO PWA INFRAESTRUCTURA Y MODALES
+   Descripción: Controla el banner compacto fijado abajo 
+   para la instalación autónoma de la WebApp.
+   ========================================================== */
+div#bannerInstalacionPWA {
+    background-color: #a12cbb;
+    color: #ffffff;
+    padding: 6px 12px; 
+    position: fixed;
+    bottom: 8px;
+    left: 16px;
+    z-index: 9999;
+    border-radius: 8px;
+    display: inline-flex;
+    flex-direction: row-reverse; 
+    align-items: center;
+    justify-content: flex-end; 
+    gap: 10px; 
+    max-width: 300px;
+    max-height: 50px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
-/* =========================================================================
-   CONTROL CENTRAL COMPACTO DEL BANNER PWA (DESDE ARCHIVO STYLE.CSS)
-   ========================================================================= */
-#bannerInstalacionPWA {
-    background-color: var(--color-turquesa) !important;
-    color: #ffffff !important;
-    padding: 6px 12px !important; /* Relleno compacto para no desbordar */
-    position: fixed !important;
-    bottom: 8px !important;
-    left: 16px !important;
-    z-index: 9999 !important;
-    border-radius: 8px !important;
-    
-    /* Configuración de alineación horizontal en una sola línea */
-    display: inline-flex !important;
-    flex-direction: row-reverse; /* Empuja el botón al principio (izquierda) y el texto a la derecha */
-    align-items: center !important;
-    justify-content: flex-end !important; /* Junta los elementos desde el inicio */
-    gap: 10px !important; /* Espaciado corto entre el botón y el texto */
-    
-    /* Tus dos líneas de control estricto de tamaño */
-    max-width: 300px !important;
-    max-height: 50px !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
-}
-
-#bannerInstalacionPWA p {
-    margin: 0 !important;
-    font-size: 0.75rem !important; /* Letra compacta para que quepa en los 300px */
-    font-weight: 500 !important;
-    white-space: nowrap; /* Evita que el texto se rompa en dos renglones */
+div#bannerInstalacionPWA p {
+    margin: 0;
+    font-size: 0.75rem; 
+    font-weight: 500;
+    white-space: nowrap; 
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #ffffff;
 }
 
-#btnInstalarPWA {
-    background-color: #ffffff !important;
-    color: var(--color-turquesa) !important;
-    border: none !important;
-    padding: 4px 8px !important; /* Botón pequeño y estilizado */
-    font-weight: 600 !important;
-    border-radius: 4px !important;
-    cursor: pointer !important;
-    font-size: 0.72rem !important;
+button#btnInstalarPWA {
+    background-color: #ffffff;
+    color: #000000;
+    border: none;
+    padding: 4px 8px; 
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.72rem;
     white-space: nowrap;
+}
+
+/* Ventanas emergentes de confirmación */
+.modal-alerta-fondo {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(15, 23, 42, 0.4);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: aparecerSutil 0.2s ease-out;
+}
+
+.tarjeta-alerta-pastel {
+    background-color: #ffffff;
+    padding: 24px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08);
+    text-align: center;
+    border-top: 5px solid #64748b;
+}
+
+.tarjeta-alerta-pastel h4 {
+    font-size: 1.15rem;
+    margin-bottom: 10px;
+    font-family: var(--fuente-sistema);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tarjeta-alerta-pastel p {
+    color: #475569;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.contenedor-botones-pastel { 
+    display: flex; 
+    justify-content: center; 
+    gap: 12px; 
+    margin-top: 20px; 
+}
+
+.btn-alerta-pastel {
+    padding: 10px 22px; 
+    border-radius: 8px; 
+    border: none; 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    cursor: pointer;
+    background-color: #cbd5e1; 
+    color: #0f172a; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04); 
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn-alerta-pastel:hover { 
+    background-color: #94a3b8; 
+}
+
+.btn-alerta-pastel.confirmar-ok { 
+    background-color: #3b82f6; 
+    color: #ffffff; 
+}
+
+.btn-alerta-pastel.confirmar-ok:hover { 
+    background-color: #2563eb; 
+}
+
+.btn-alerta-pastel.confirmar-cancel { 
+    background-color: #f1f5f9; 
+    color: #64748b; 
+    border: 1px solid #cbd5e1; 
+}
+
+.btn-alerta-pastel.confirmar-cancel:hover { 
+    background-color: #e2e8f0; 
+}
+
+@keyframes aparecerSutil {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* ==========================================================
+   SECCIÓN 7: ALERTAS ANIMADAS (NOTIFICACIONES TOASTS)
+   Descripción: Controla los recuadros flotantes de tus 
+   mensajes y las animaciones para los iconos integrados.
+   ========================================================== */
+.contenedor-toast-global {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 340px;
+    width: calc(100% - 40px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.alerta-toast {
+    background-color: #2cbbb0; 
+    color: #ffffff;
+    padding: 14px 16px;
+    border-radius: 8px;
+    font-family: var(--fuente-sistema, sans-serif);
+    font-size: 0.95rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: auto;
+    animation: entradaToast 0.3s ease-out forwards;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Variación cromática para advertencias/errores */
+.alerta-toast.toast-error {
+    background-color: #e53e3e;
+}
+
+/* Estilos de alineación interna para el contenido */
+.alerta-toast span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.4;
+}
+
+@keyframes entradaToast {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
