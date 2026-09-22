@@ -513,51 +513,29 @@ button#btnInstalarPWA {
 }
 
 /* ==========================================================
-   SECCIÓN 7: ALERTAS ANIMADAS (NOTIFICACIONES TOASTS)
-   Descripción: Controla los recuadros flotantes de tus 
-   mensajes y las animaciones para los iconos integrados.
+   SECCIÓN 7: ALERTAS ANIMADAS FLOTANTES (TOASTS) ORIGINALES
+   Descripción: Mantiene únicamente el catálogo de mensajes 
+   base de la primera versión solicitada por el usuario.
    ========================================================== */
-.contenedor-toast-global {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    max-width: 340px;
-    width: calc(100% - 40px);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    pointer-events: none;
-}
-
 .alerta-toast {
     background-color: #2cbbb0; 
     color: #ffffff;
-    padding: 14px 16px;
-    border-radius: 8px;
+    padding: 12px 16px;
+    border-radius: 6px;
     font-family: var(--fuente-sistema, sans-serif);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 500;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
-    gap: 12px;
-    pointer-events: auto;
+    justify-content: space-between;
+    gap: 10px;
     animation: entradaToast 0.3s ease-out forwards;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* Variación cromática para advertencias/errores */
 .alerta-toast.toast-error {
     background-color: #e53e3e;
-}
-
-/* Estilos de alineación interna para el contenido */
-.alerta-toast span {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    line-height: 1.4;
 }
 
 @keyframes entradaToast {
@@ -570,3 +548,4 @@ button#btnInstalarPWA {
         transform: translateX(0);
     }
 }
+
