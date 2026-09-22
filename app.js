@@ -233,7 +233,9 @@ function recibirDatosDesdeGoogle(json) {
 // ADICIÓN DE BAJO IMPACTO: CONCATENADOR DE ICONOS ORIGINAL
 // ==========================================================
 function mostrarAlertaPastel(mensaje, tipo) {
-  // 1. Diccionario de emojis solicitados por el usuario
+  // Si no se le pasa un tipo de alerta, por defecto será 'exito'
+  const tipoReal = tipo || 'exito';
+
   const iconosAlerta = {
     'exito': '✨',         
     'confirmacion': '🤔',  
@@ -241,7 +243,7 @@ function mostrarAlertaPastel(mensaje, tipo) {
     'error': '🚨'          
   };
 
-  const iconoHtml = iconosAlerta[tipo] || '📌';
+  const iconoHtml = iconosAlerta[tipoReal] || '📌';
 
   let contenedorAlertas = document.getElementById(
       'contenedor-alertas-pasteles'
@@ -255,18 +257,18 @@ function mostrarAlertaPastel(mensaje, tipo) {
   }
 
   const alerta = document.createElement('div');
-  alerta.className = tipo === 'error' || tipo === 'advertencia' 
+  alerta.className = tipoReal === 'error' || tipoReal === 'advertencia' 
     ? 'alerta-toast toast-error' 
     : 'alerta-toast';
 
-  // 🛡️ UNIFICACIÓN CON EL ICONO: Agrega el emoji antes del texto del servidor
+  // Inyección del emoji y el texto dentro del recuadro turquesa
   alerta.innerHTML = `
     <span>${iconoHtml} ${mensaje}</span>
   `;
 
   contenedorAlertas.appendChild(alerta);
 
-  // Temporizador de lectura: 6 segundos en total (3 segundos más)
+  // Temporizador de lectura: 6 segundos en total
   setTimeout(() => {
     alerta.style.opacity = '0';
     alerta.style.transform = 'translateX(100%)';
@@ -281,7 +283,6 @@ function mostrarAlertaPastel(mensaje, tipo) {
 }
 
 window.mostrarAlertaPastel = mostrarAlertaPastel;
-
 
 // =========================================================================
 // SECCIÓN 4: CONTROLADOR DE EDICIÓN PASIVA TOTALMENTE INTEGRADO (APP.JS)
