@@ -341,6 +341,39 @@
     <!-- VÍNCULOS DE CONTROL CENTRAL -->
     <script src="carpetas.js"></script>
     <script src="app.js"></script>
-</body>
+    <!-- ==========================================================
+         PUENTE DE ACTIVACIÓN: MOTOR DEL LOGIN AUTÓNOMO
+         Ubicación: FINAL ABSOLUTO DE INDEX.HTML (ARRIBA DE </body>)
+         ========================================================== -->
+    <script>
+        // Verificación instantánea al arrancar la pantalla
+        document.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem("sesionUsuarioActiva") === "si") {
+                const capa = document.getElementById("pantalla-login-bloqueo");
+                if (capa) capa.style.display = "none";
+            }
+        });
 
+        // Validador inmediato para el formulario que pegaste arriba
+        function ejecutarAccesoDirecto(event) {
+            event.preventDefault();
+            const clave = document.getElementById("input-clave-login").value;
+            const capa = document.getElementById("pantalla-login-bloqueo");
+            
+            // 🔒 CONTRASEÑA REAL: Cambia "12345" por la que tú quieras
+            if (clave === "12345") {
+                localStorage.setItem("sesionUsuarioActiva", "si");
+                if (capa) capa.style.display = "none";
+                if (window.mostrarAlertaPastel) {
+                    window.mostrarAlertaPastel("Acceso concedido", "exito");
+                }
+            } else {
+                if (window.mostrarAlertaPastel) {
+                    window.mostrarAlertaPastel("Contraseña incorrecta", "error");
+                }
+                document.getElementById("input-clave-login").value = "";
+            }
+        }
+    </script>
+</body>
 </html>
