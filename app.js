@@ -1,15 +1,12 @@
-// =========================================================================
-// SECCIÓN 1: VARIABLES MAESTRAS DE ACCESO REMOTO (APP.JS)
-// Ubicación del bloque: ARRIBA DEL TODO
-// =========================================================================
-
-// Enlace exclusivo hacia la base de datos de las hojas (Google Sheets)
+// ==========================================================
+// SECCIÓN 1: CONFIGURACIÓN GLOBAL Y MEMORIA (UNIFICADA)
+// Ubicación: INICIO ABSOLUTO DE APP.JS
+// ==========================================================
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5f-HM7FAWTxf3oDPFafcZ4EUL-5Bbt6UtBU6JgqsHIqEGAN1Z5TFyx3af7B6nijvAvg/exec";
 
-// Variable global de memoria para controlar el índice del registro en edición
 let registroEditandoIndex = null;
 
-// 🌟 DICCIONARIO COMPLETO: Enlaces a tus páginas web reales de GitHub Pages
+// 🌟 DICCIONARIO UNIFICADO: Mantiene tus rutas web originales
 const ENLACES_HOJAS = {
     "Superintendentes": "https://metrowest.github.io/Visita/desastre.html#punto-superintendentes",
     "Hospitalidad": "https://metrowest.github.io/Visita/Almuerzo.html",
@@ -22,6 +19,45 @@ const ENLACES_HOJAS = {
     "Seguridad": "https://metrowest.github.io/Visita/seguridad.html"
 };
 
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    inicializarAplicacionBase();
+  }, 300); 
+});
+
+function inicializarAplicacionBase() {
+  const selSecc = document.getElementById(
+      "selectorSeccionesModular"
+  );
+  const selMes = document.getElementById("selectorMes");
+
+  if (selSecc) {
+    // Recuperar la última pestaña que abrió el usuario
+    const ultSecc = localStorage.getItem("ultimaSeccionGuardada");
+    if (ultSecc && ENLACES_HOJAS[ultSecc]) {
+        selSecc.value = ultSecc;
+    }
+
+    selSecc.addEventListener("change", (e) => {
+      localStorage.setItem("ultimaSeccionGuardada", e.target.value);
+      const hoja = ENLACES_HOJAS[e.target.value];
+      if (hoja) cargarDatosMódulo(hoja);
+    });
+
+    const hojaIni = ENLACES_HOJAS[selSecc.value];
+    if (hojaIni) cargarDatosMódulo(hojaIni);
+  }
+
+  if (selMes) {
+    // Recuperar el mes de la memoria del celular
+    const ultMes = localStorage.getItem("ultimoMesGuardado");
+    if (ultMes) selMes.value = ultMes;
+
+    selMes.addEventListener("change", (e) => {
+      localStorage.setItem("ultimoMesGuardado", e.target.value);
+    });
+  }
+}
 
 // =========================================================================
 // SECCIÓN 2: DISPARADOR AUTOMÁTICO DE LECTURA DINÁMICA (APP.JS)
