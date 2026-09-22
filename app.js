@@ -229,6 +229,7 @@ function recibirDatosDesdeGoogle(json) {
     }
 }
 
+
 // =========================================================================
 // SECCIÓN 4: CONTROLADOR DE EDICIÓN PASIVA TOTALMENTE INTEGRADO (APP.JS)
 // Ubicación del bloque: CENTRO (PARTE MEDIA - FUNCIÓN 3)
